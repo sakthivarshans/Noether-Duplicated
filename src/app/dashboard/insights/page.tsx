@@ -87,8 +87,7 @@ export default function InsightsPage() {
     { name: 'Pending', value: pendingTasks, fill: 'hsl(var(--muted))' },
   ];
 
-  const { scores } = useGameScores();
-  const totalGameScore = scores.reduce((acc, score) => acc + score.score, 0);
+  const { totalScore } = useGameScores();
 
   const chartConfig = {
     minutes: {
@@ -133,7 +132,7 @@ export default function InsightsPage() {
             <Gamepad2 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalGameScore} points</div>
+            <div className="text-2xl font-bold">{totalScore} points</div>
             <p className="text-xs text-muted-foreground">From all games played</p>
           </CardContent>
         </Card>

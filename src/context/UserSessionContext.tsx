@@ -19,6 +19,8 @@ interface UserSessionContextType {
   addTask: (task: Task) => void;
   updateTask: (taskId: string, updates: Partial<Task>) => void;
   deleteTask: (taskId: string) => void;
+  addGameScore: (score: GameScore) => void;
+  isLoading: boolean;
 }
 
 const UserSessionContext = createContext<UserSessionContextType | undefined>(undefined);
@@ -77,6 +79,14 @@ export const UserSessionProvider = ({ children }: { children: ReactNode }) => {
     });
   }
   
+  const addGameScore = (score: GameScore) => {
+    setGameScores(prev => {
+        const updated = [...prev, score];
+        localStorage.setItem('gameScores', JSON.stringify(updated));
+        return updated;
+    });
+  }
+  
   const contextValue = useMemo(() => ({
     studySessions,
     tasks,
@@ -85,7 +95,10 @@ export const UserSessionProvider = ({ children }: { children: ReactNode }) => {
     addTask,
     updateTask,
     deleteTask,
-  }), [studySessions, tasks, gameScores]);
+    addGameScore,
+    isLoading,
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), [studySessions, tasks, gameScores, isLoading]);
   
   if (isLoading) {
     return null;

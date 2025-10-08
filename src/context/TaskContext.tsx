@@ -23,7 +23,7 @@ interface TaskContextType {
 const TaskContext = createContext<TaskContextType | undefined>(undefined);
 
 export const TaskProvider = ({ children }: { children: ReactNode }) => {
-  const { tasks, addTask: addUserSessionTask, updateTask: updateUserSessionTask, deleteTask: deleteUserSessionTask } = useUserSession();
+  const { tasks, addTask: addUserSessionTask, updateTask: updateUserSessionTask, deleteTask: deleteUserSessionTask, isLoading } = useUserSession();
   const { toast } = useToast();
   const [notifiedTasks, setNotifiedTasks] = useState<string[]>([]);
 
@@ -79,6 +79,10 @@ export const TaskProvider = ({ children }: { children: ReactNode }) => {
     deleteTask,
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }), [tasks]);
+
+  if (isLoading) {
+    return null; // Don't render children until session data is loaded
+  }
 
   return (
     <TaskContext.Provider value={contextValue}>

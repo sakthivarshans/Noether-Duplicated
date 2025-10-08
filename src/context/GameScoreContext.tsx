@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useState, useContext, ReactNode, useMemo, useEffect } from 'react';
+import React, { createContext, useState, useContext, ReactNode, useMemo } from 'react';
 import { isThisWeek } from 'date-fns';
 import { useUserSession } from './UserSessionContext';
 
@@ -21,24 +21,12 @@ interface GameScoreContextType {
 const GameScoreContext = createContext<GameScoreContextType | undefined>(undefined);
 
 export const GameScoreProvider = ({ children }: { children: ReactNode }) => {
-  const [scores, setScores] = useState<GameScore[]>([]);
-
-  useEffect(() => {
-    // Load scores from localStorage on mount
-    try {
-      const storedScores = localStorage.getItem('gameScores');
-      if (storedScores) {
-        setScores(JSON.parse(storedScores));
-      }
-    } catch (error) {
-      console.error("Failed to parse scores from localStorage", error);
-      setScores([]);
-    }
-  }, []);
+  const { gameScores: allScores, addGameScore: addUserSessionScore, isLoading } = useUserSession();
 
   const weeklyScores = useMemo(() => {
-    return scores.filter(score => isThisWeek(new Date(score.playedDate), { weekStartsOn: 1 }));
-  }, [scores]);
+    if (!allScores) return [];
+    return allScores.filter(score => isThisWeek(new Date(score.playedDate), { weekStartsOn: 1 }));
+  }, [allScores]);
 
   const totalScore = useMemo(() => {
     return weeklyScores.reduce((sum, score) => sum + score.score, 0);
@@ -57,16 +45,7 @@ export const GameScoreProvider = ({ children }: { children: ReactNode }) => {
       score,
       playedDate: new Date().toISOString(),
     };
-    
-    setScores(prevScores => {
-        const updatedScores = [...prevScores, newScore];
-        try {
-            localStorage.setItem('gameScores', JSON.stringify(updatedScores));
-        } catch (error) {
-            console.error("Failed to save scores to localStorage", error);
-        }
-        return updatedScores;
-    });
+    addUserSessionScore(newScore);
   };
 
   const contextValue = useMemo(() => ({
@@ -76,6 +55,10 @@ export const GameScoreProvider = ({ children }: { children: ReactNode }) => {
     addScore,
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }), [weeklyScores, totalScore]);
+  
+  if (isLoading) {
+    return null; // Don't render children until session data is loaded
+  }
 
   return (
     <GameScoreContext.Provider value={contextValue}>

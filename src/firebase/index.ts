@@ -10,7 +10,8 @@ const useAuth = () => ({});
 const useFirestore = () => ({});
 const useFirebaseApp = () => ({});
 const useUser = () => ({ user: null, isUserLoading: false });
-const useMemoFirebase = <T>(factory: () => T) => factory();
+const useMemoFirebase = <T>(factory: () => T, deps: any[]) => factory();
+
 
 export {
     useFirebase,
