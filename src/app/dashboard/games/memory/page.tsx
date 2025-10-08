@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -41,9 +42,19 @@ export default function MemoryGamePage() {
     const [moves, setMoves] = useState(0);
     const { addScore } = useGameScores();
     const [isChecking, setIsChecking] = useState(false);
+    const [isRevealing, setIsRevealing] = useState(true);
 
     const isGameOver = matched.length === ICONS.length;
     
+    useEffect(() => {
+        setIsRevealing(true);
+        const revealTimer = setTimeout(() => {
+            setIsRevealing(false);
+        }, 2000);
+
+        return () => clearTimeout(revealTimer);
+    }, [cards]);
+
     useEffect(() => {
         if (flipped.length === 2) {
             setIsChecking(true);
@@ -73,7 +84,7 @@ export default function MemoryGamePage() {
 
 
     const handleCardClick = (index: number) => {
-        if (isChecking || flipped.includes(index) || matched.includes(cards[index].name) || flipped.length >= 2) {
+        if (isRevealing || isChecking || flipped.includes(index) || matched.includes(cards[index].name) || flipped.length >= 2) {
             return;
         }
 
@@ -87,6 +98,7 @@ export default function MemoryGamePage() {
         setFlipped([]);
         setMatched([]);
         setMoves(0);
+        setIsRevealing(true);
     };
 
   return (
@@ -115,7 +127,7 @@ export default function MemoryGamePage() {
                         </div>
                         <div className="grid grid-cols-4 gap-4">
                             {cards.map((card, index) => {
-                                const isFlipped = flipped.includes(index) || matched.includes(card.name);
+                                const isFlipped = isRevealing || flipped.includes(index) || matched.includes(card.name);
                                 const Icon = card.icon;
                                 return (
                                     <div key={card.id} className="perspective-[1000px] aspect-square" onClick={() => handleCardClick(index)}>
