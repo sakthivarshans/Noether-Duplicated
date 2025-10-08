@@ -85,7 +85,7 @@ export default function MemoryGamePage() {
 
     useEffect(() => {
         if (isGameOver) {
-            const score = Math.max(0, 100 - (moves - ICONS.length * 2) * 5); // Example scoring logic
+            const score = Math.max(0, 100 - (moves - ICONS.length) * 10); // Example scoring logic
             addScore('memory', score);
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -99,7 +99,11 @@ export default function MemoryGamePage() {
 
         const newFlipped = [...flipped, index];
         setFlipped(newFlipped);
-        setMoves(m => m + 1);
+        
+        // A "move" consists of flipping two cards.
+        if (newFlipped.length === 2) {
+            setMoves(m => m + 1);
+        }
     };
 
     const resetGame = (initial = false) => {
