@@ -40,7 +40,7 @@ const tools = [
   { href: '/dashboard/pyq', label: 'PYQ Answers', icon: FileQuestion, description: 'Get AI-generated answers for past papers' },
   { href: '/dashboard/pomodoro', label: 'Pomodoro', icon: Timer, description: 'Stay focused with 25-minute sessions' },
   { href: '/dashboard/power-nap', label: 'Power Nap', icon: Bed, description: 'Recharge with a quick power nap' },
-  { href: '/dashboard/search', label: 'Topic Search', icon: Search, description: 'Get AI-powered summaries on any topic' },
+  { href: '/dashboard/search', label: 'Smart Citation', icon: Search, description: 'Get AI-powered summaries on any topic' },
   
 ];
 

@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Search, Loader2, Link as LinkIcon } from 'lucide-react';
-import { enhancedTopicSearch, EnhancedTopicSearchOutput } from '@/ai/flows/enhanced-topic-search';
+import { smartCitation, SmartCitationOutput } from '@/ai/flows/smart-citation';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -12,7 +12,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 export default function SearchPage() {
   const [query, setQuery] = useState("Newton's Laws of Motion");
   const [isSearching, setIsSearching] = useState(false);
-  const [result, setResult] = useState<EnhancedTopicSearchOutput | null>(null);
+  const [result, setResult] = useState<SmartCitationOutput | null>(null);
   const { toast } = useToast();
 
   const handleSearch = async () => {
@@ -20,7 +20,7 @@ export default function SearchPage() {
     setIsSearching(true);
     setResult(null);
     try {
-      const response = await enhancedTopicSearch({ topic: query });
+      const response = await smartCitation({ topic: query });
       setResult(response);
     } catch (e) {
       console.error(e);
@@ -67,8 +67,8 @@ export default function SearchPage() {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Enhanced Topic Search</CardTitle>
-          <CardDescription>Enter a topic to get an AI-powered summary and relevant links.</CardDescription>
+          <CardTitle>Smart Citation</CardTitle>
+          <CardDescription>Enter a topic to get an AI-powered summary and cited sources.</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex w-full items-center space-x-2">

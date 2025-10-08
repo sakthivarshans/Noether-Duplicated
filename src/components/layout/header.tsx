@@ -15,7 +15,7 @@ const navItems = [
     { href: '/dashboard', label: 'Dashboard' },
     { href: '/dashboard/upload', label: 'Upload' },
     { href: '/dashboard/pyq', label: 'PYQ' },
-    { href: '/dashboard/search', label: 'Topic Search' },
+    { href: '/dashboard/search', label: 'Smart Citation' },
     { href: '/dashboard/roadmap', label: 'Roadmap' },
     { href: '/dashboard/timetable', label: 'Timetable' },
     { href: '/dashboard/todo', label: 'To-Do List' },
