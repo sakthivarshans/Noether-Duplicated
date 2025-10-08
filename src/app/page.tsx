@@ -8,7 +8,7 @@ import { User, LogIn, LogOut } from 'lucide-react';
 import Link from 'next/link';
 import { useFirebase } from '@/firebase';
 import { useEffect, useState } from 'react';
-import { signInAnonymously, signOut } from '@/firebase/auth';
+import { signInWithGoogle, signOut } from '@/firebase/auth';
 import { onAuthStateChanged } from 'firebase/auth';
 
 
@@ -37,13 +37,11 @@ export default function LandingPage() {
     if (auth) {
       setIsLoading(true);
       try {
-        const userCredential = await signInAnonymously(auth);
-        if (userCredential) {
-           // The onAuthStateChanged listener will handle the redirect.
-           // No need to manually push here.
-        } else {
-            setIsLoading(false); // If sign-in fails, stop loading
+        const userCredential = await signInWithGoogle(auth);
+        if (!userCredential) {
+           setIsLoading(false); // If sign-in fails, stop loading
         }
+        // The onAuthStateChanged listener will handle the redirect.
       } catch (error) {
         console.error("Sign-in failed:", error);
         setIsLoading(false);
@@ -84,7 +82,7 @@ export default function LandingPage() {
             ) : (
               <Button onClick={handleSignIn} disabled={isLoading}>
                  <LogIn className="mr-2 h-4 w-4" />
-                {isLoading ? 'Loading...' : 'Sign In Anonymously'}
+                {isLoading ? 'Loading...' : 'Sign In with Google'}
               </Button>
             )}
           </nav>
@@ -118,3 +116,5 @@ export default function LandingPage() {
     </div>
   );
 }
+
+    

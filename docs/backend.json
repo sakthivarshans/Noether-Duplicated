@@ -8,7 +8,7 @@
       "properties": {
         "id": {
           "type": "string",
-          "description": "Unique identifier for the User entity."
+          "description": "Unique identifier for the User entity, matching Firebase Auth UID."
         },
         "email": {
           "type": "string",
@@ -18,6 +18,10 @@
         "name": {
           "type": "string",
           "description": "Full name of the user."
+        },
+        "profileImageURL": {
+            "type": "string",
+            "description": "URL of the user's profile picture."
         },
         "college": {
           "type": "string",
@@ -47,10 +51,10 @@
           "type": "string",
           "description": "List of the user's skills."
         },
-        "profileImage": {
-          "type": "string",
-          "description": "URL or path to the user's profile image.",
-          "format": "uri"
+        "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The timestamp when the user profile was created."
         }
       },
       "required": [
@@ -338,7 +342,8 @@
   "auth": {
     "providers": [
       "password",
-      "anonymous"
+      "anonymous",
+      "google.com"
     ]
   },
   "firestore": {
@@ -507,3 +512,4 @@
     "reasoning": "The Firestore structure is designed to follow best practices for security, scalability, and debuggability, focusing on authorization independence and clear data ownership. The structure utilizes path-based ownership for user-specific data and avoids hierarchical authorization dependencies by denormalizing authorization context where needed. This approach ensures that security rules are straightforward and efficient, and that atomic operations can be performed without requiring complex `get()` calls. Homogeneous security postures are ensured by structurally segregating data based on access needs. The application uses path-based ownership for entities like Documents, Flashcards, Timetables, TodoTasks, VoiceNotes, and GameScores, all nested under the `/users/{userId}` collection, which provides a simple and secure way to manage user-specific data. This approach means that `list` operations are inherently secure as they are scoped to the user's path. Additionally, there is no need for custom claims, and all authorization relies solely on `request.auth.uid`."
   }
 }
+    

@@ -51,19 +51,19 @@ export function UserNav() {
           <Avatar className="h-9 w-9">
             <AvatarImage
               src={user?.photoURL || "https://picsum.photos/seed/avatar/100/100"}
-              alt="User avatar"
+              alt={user?.displayName || "User avatar"}
               data-ai-hint="user avatar"
             />
-            <AvatarFallback>{user.isAnonymous ? 'A' : (user?.email?.[0]?.toUpperCase() || 'U')}</AvatarFallback>
+            <AvatarFallback>{user?.displayName?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || 'U'}</AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">{user.isAnonymous ? 'Anonymous User' : (user?.displayName || 'User')}</p>
+            <p className="text-sm font-medium leading-none">{user.displayName || 'User'}</p>
             <p className="text-xs leading-none text-muted-foreground">
-              {user.isAnonymous ? user.uid : (user?.email || 'Not signed in')}
+              {user.email || 'Not signed in'}
             </p>
           </div>
         </DropdownMenuLabel>
@@ -87,3 +87,5 @@ export function UserNav() {
     </DropdownMenu>
   );
 }
+
+    
