@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview Generates detailed answers for past year question papers using GenAI.
@@ -33,7 +34,7 @@ const prompt = ai.definePrompt({
   prompt: `You are an expert educator specializing in providing detailed answers to past year question papers.
 
 You will use the content of the question paper to generate detailed and accurate answers for each question.
-Present the answers in a clear and organized manner.
+Present the answers in a clear, organized, and plain text format. Do not use any markdown formatting like asterisks for bolding or lists.
 
 Question Paper Content:
 {{{pyqContent}}}`,
