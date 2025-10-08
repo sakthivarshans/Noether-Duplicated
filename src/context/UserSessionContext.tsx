@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { createContext, useContext, ReactNode, useMemo } from 'react';
+import React, { createContext, useContext, ReactNode, useMemo, useEffect, useState } from 'react';
 import { useUser, useFirestore, useMemoFirebase } from '@/firebase';
 import { useCollection } from '@/firebase/firestore/use-collection';
 import { collection } from 'firebase/firestore';
@@ -47,7 +47,7 @@ export const UserSessionProvider = ({ children }: { children: ReactNode }) => {
   const { data: gameScores, isLoading: gameScoresLoading } = useCollection<GameScore>(gameScoresQuery);
 
   const isLoading = isUserLoading || sessionsLoading || tasksLoading || gameScoresLoading;
-
+  
   const contextValue = useMemo(() => ({
     studySessions: studySessions || [],
     tasks: tasks || [],
@@ -55,6 +55,12 @@ export const UserSessionProvider = ({ children }: { children: ReactNode }) => {
     isLoading,
   }), [studySessions, tasks, gameScores, isLoading]);
   
+  // Do not render children until the initial user load and subsequent data fetches are complete.
+  // This is the key fix to prevent downstream components from triggering their own hooks too early.
+  if (isLoading) {
+    return null;
+  }
+
   return (
     <UserSessionContext.Provider value={contextValue}>
       {children}
