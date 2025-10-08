@@ -9,7 +9,6 @@ import { useGameScores } from '@/context/GameScoreContext';
 const gameIcons: { [key: string]: React.ElementType } = {
   sudoku: Brain,
   memory: Dna,
-  quiz: FlaskConical,
   reaction: Zap,
 };
 

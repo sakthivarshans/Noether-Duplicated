@@ -8,3 +8,5 @@ import '@/ai/flows/smart-citation.ts';
 import '@/ai/flows/summarize-and-highlight-document.ts';
 import '@/ai/flows/generate-learning-roadmap.ts';
 import '@/ai/flows/generate-speech-from-text.ts';
+import '@/ai/flows/generate-quiz-from-document.ts';
+import '@/ai/flows/grade-quiz.ts';
