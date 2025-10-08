@@ -98,7 +98,7 @@ export default function FlashcardsPage() {
                   {fileName || "Drag & drop a file or click to upload"}
                 </span>
               </span>
-              <Input id="file-upload" name="file-upload" type="file" className="hidden" onChange={handleFileChange} accept=".pdf,.pptx,.txt,.md" />
+              <Input id="file-upload" name="file-upload" type="file" className="hidden" onChange={handleFileChange} accept=".txt,.md" />
             </label>
           </div>
           <Button onClick={handleGenerate} disabled={!fileName || isProcessing} className="w-full sm:w-auto">
