@@ -31,20 +31,17 @@ interface TaskContextType {
 const TaskContext = createContext<TaskContextType | undefined>(undefined);
 
 export const TaskProvider = ({ children }: { children: ReactNode }) => {
-  const { user } = useUser();
+  const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
   const [notifiedTasks, setNotifiedTasks] = useState<string[]>([]);
 
-  const tasksCollectionPath = useMemo(() => {
-    if (!user || user.isAnonymous) return null;
-    return `users/${user.uid}/todoTasks`;
-  }, [user]);
-
   const tasksQuery = useMemoFirebase(() => {
-    if (!tasksCollectionPath || !firestore) return null;
-    return collection(firestore, tasksCollectionPath);
-  }, [tasksCollectionPath, firestore]);
+    if (isUserLoading || !user || user.isAnonymous || !firestore) {
+      return null;
+    }
+    return collection(firestore, `users/${user.uid}/todoTasks`);
+  }, [user, firestore, isUserLoading]);
 
   const { data: tasks = [], isLoading } = useCollection<Omit<Task, 'id'>>(tasksQuery);
 
@@ -74,7 +71,8 @@ export const TaskProvider = ({ children }: { children: ReactNode }) => {
   }, [tasks, toast, notifiedTasks, isLoading]);
 
   const addTask = (title: string, deadline: string) => {
-    if (!title || !deadline || !user || !firestore || !tasksCollectionPath) return;
+    if (!title || !deadline || !user || !firestore) return;
+    const tasksCollectionPath = `users/${user.uid}/todoTasks`;
     const newTask = {
       title,
       deadline,
@@ -86,7 +84,8 @@ export const TaskProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const toggleTaskCompletion = (id: string) => {
-    if (!firestore || !tasksCollectionPath) return;
+    if (!firestore || !user) return;
+    const tasksCollectionPath = `users/${user.uid}/todoTasks`;
     const task = tasks?.find(t => t.id === id);
     if (!task) return;
     const docRef = doc(firestore, tasksCollectionPath, id);
@@ -94,7 +93,8 @@ export const TaskProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const deleteTask = (id: string) => {
-    if (!firestore || !tasksCollectionPath) return;
+    if (!firestore || !user) return;
+    const tasksCollectionPath = `users/${user.uid}/todoTasks`;
     const docRef = doc(firestore, tasksCollectionPath, id);
     deleteDocumentNonBlocking(docRef);
   };
@@ -107,6 +107,9 @@ export const TaskProvider = ({ children }: { children: ReactNode }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }), [tasks]);
 
+  if (isUserLoading) {
+      return null;
+  }
 
   return (
     <TaskContext.Provider value={contextValue}>

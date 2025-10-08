@@ -24,14 +24,16 @@ interface GameScoreContextType {
 const GameScoreContext = createContext<GameScoreContextType | undefined>(undefined);
 
 export const GameScoreProvider = ({ children }: { children: ReactNode }) => {
-  const { user } = useUser();
+  const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
 
   const scoresQuery = useMemoFirebase(() => {
-    // CRITICAL FIX: Ensure user exists AND is not anonymous before creating a query.
-    if (!user || user.isAnonymous || !firestore) return null;
+    // CRITICAL FIX: Ensure user exists, is not loading, AND is not anonymous before creating a query.
+    if (isUserLoading || !user || user.isAnonymous || !firestore) {
+      return null;
+    }
     return collection(firestore, `users/${user.uid}/gameScores`);
-  }, [user, firestore]);
+  }, [user, firestore, isUserLoading]);
 
   const { data: allScores, isLoading: areScoresLoading } = useCollection<GameScore>(scoresQuery);
 
@@ -69,12 +71,10 @@ export const GameScoreProvider = ({ children }: { children: ReactNode }) => {
     getHighScore,
     addScore,
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), [weeklyScores, totalScore, areScoresLoading]);
-
-  // Do not render children until the initial loading is complete.
-  // This prevents downstream components from accessing context values before they are ready.
-  if (areScoresLoading && allScores === null) {
-    return null;
+  }), [weeklyScores, totalScore]);
+  
+  if (isUserLoading) {
+      return null;
   }
 
   return (
