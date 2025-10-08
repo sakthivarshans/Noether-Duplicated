@@ -49,36 +49,41 @@ export async function getOrCreateUser(
         profileImageURL: user.photoURL,
         createdAt: serverTimestamp(), // Let Firestore set the creation time
       };
+      
+      // Use setDoc and catch potential errors for creating the document.
+      await setDoc(userRef, newUserProfile)
+        .catch((error) => {
+            const permissionError = new FirestorePermissionError({
+                path: userRef.path,
+                operation: 'create',
+                requestResourceData: {
+                    id: user.uid,
+                    email: user.email,
+                    name: user.displayName,
+                    profileImageURL: user.photoURL,
+                },
+            });
+            errorEmitter.emit('permission-error', permissionError);
+            throw permissionError; // Re-throw to signal failure
+        });
 
-      // We use await here, but catch the specific permission error.
-      await setDoc(userRef, newUserProfile);
 
       return newUserProfile;
     }
   } catch (error: any) {
-    // Determine the operation type based on which part of the 'try' block failed.
-    // This is a simplification; a more robust way would be to check if the doc existed before trying to set.
-    // For now, we'll assume a 'get' or 'create' failed.
-    const operation =
-      error.code === 'permission-denied' && error.message.includes('create')
-        ? 'create'
-        : 'get';
+    // This will now catch both getDoc failures and re-thrown setDoc failures
+    if (error instanceof FirestorePermissionError) {
+        // If it's already our custom error, just re-throw it or let it propagate
+        throw error;
+    }
 
+    // If it's a generic error (e.g., from getDoc), wrap it
     const permissionError = new FirestorePermissionError({
       path: userRef.path,
-      operation: operation,
-      ...(operation === 'create' && { requestResourceData: {
-        id: user.uid,
-        email: user.email,
-        name: user.displayName,
-        profileImageURL: user.photoURL,
-        // We can't send serverTimestamp() to the error object.
-      }}),
+      operation: 'get', 
     });
 
     errorEmitter.emit('permission-error', permissionError);
-
-    // Return null or re-throw a generic error to signal failure to the caller.
     return null;
   }
 }

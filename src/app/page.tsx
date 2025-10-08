@@ -36,8 +36,18 @@ export default function LandingPage() {
   const handleSignIn = async () => {
     if (auth) {
       setIsLoading(true);
-      await signInAnonymously(auth);
-      // The onAuthStateChanged listener will handle the redirect
+      try {
+        const userCredential = await signInAnonymously(auth);
+        if (userCredential) {
+           // The onAuthStateChanged listener will handle the redirect.
+           // No need to manually push here.
+        } else {
+            setIsLoading(false); // If sign-in fails, stop loading
+        }
+      } catch (error) {
+        console.error("Sign-in failed:", error);
+        setIsLoading(false);
+      }
     }
   };
 
@@ -74,7 +84,7 @@ export default function LandingPage() {
             ) : (
               <Button onClick={handleSignIn} disabled={isLoading}>
                  <LogIn className="mr-2 h-4 w-4" />
-                {isLoading ? 'Loading...' : 'Sign In'}
+                {isLoading ? 'Loading...' : 'Sign In Anonymously'}
               </Button>
             )}
           </nav>
