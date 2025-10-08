@@ -36,18 +36,15 @@ export default function MusicPage() {
   useEffect(() => {
     if (audioRef.current) {
       if (isPlaying) {
-        // Only change src if the track is different
         if (audioRef.current.src !== currentTrack.url) {
             audioRef.current.src = currentTrack.url;
-            audioRef.current.load();
         }
         audioRef.current.play().catch(error => console.error("Error playing audio:", error));
       } else {
         audioRef.current.pause();
       }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isPlaying, currentTrack.url]); // Depend on URL instead of the whole object
+  }, [isPlaying, currentTrack.url]);
 
 
   const handleVolumeChange = (value: number[]) => {
