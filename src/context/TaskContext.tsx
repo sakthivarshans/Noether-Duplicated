@@ -3,22 +3,14 @@
 import React, { createContext, useContext, ReactNode, useEffect, useMemo, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { differenceInMinutes } from 'date-fns';
-import { useUser, useFirestore, useMemoFirebase } from '@/firebase';
-import {
-  addDocumentNonBlocking,
-  updateDocumentNonBlocking,
-  deleteDocumentNonBlocking,
-} from '@/firebase/non-blocking-updates';
-import { collection, doc } from 'firebase/firestore';
 import { useUserSession } from './UserSessionContext';
 
 
 export interface Task {
-  id: string; // Changed from number to string for Firestore
+  id: string;
   title: string;
   deadline: string;
   completed: boolean;
-  userId: string;
 }
 
 interface TaskContextType {
@@ -31,15 +23,12 @@ interface TaskContextType {
 const TaskContext = createContext<TaskContextType | undefined>(undefined);
 
 export const TaskProvider = ({ children }: { children: ReactNode }) => {
-  const { user } = useUser();
-  const firestore = useFirestore();
-  const { tasks, isLoading } = useUserSession();
+  const { tasks, addTask: addUserSessionTask, updateTask: updateUserSessionTask, deleteTask: deleteUserSessionTask } = useUserSession();
   const { toast } = useToast();
   const [notifiedTasks, setNotifiedTasks] = useState<string[]>([]);
 
   useEffect(() => {
     const checkDeadlines = () => {
-      if (isLoading || !tasks) return;
       tasks.forEach(task => {
         if (!task.completed && !notifiedTasks.includes(task.id)) {
           const now = new Date();
@@ -60,35 +49,27 @@ export const TaskProvider = ({ children }: { children: ReactNode }) => {
     const intervalId = setInterval(checkDeadlines, 60000); // Check every minute
 
     return () => clearInterval(intervalId);
-  }, [tasks, toast, notifiedTasks, isLoading]);
+  }, [tasks, toast, notifiedTasks]);
 
   const addTask = (title: string, deadline: string) => {
-    if (!title || !deadline || !user || !firestore) return;
-    const tasksCollectionPath = `users/${user.uid}/todoTasks`;
+    if (!title || !deadline) return;
     const newTask = {
+      id: new Date().toISOString(),
       title,
       deadline,
       completed: false,
-      userId: user.uid,
     };
-    const collectionRef = collection(firestore, tasksCollectionPath);
-    addDocumentNonBlocking(collectionRef, newTask);
+    addUserSessionTask(newTask);
   };
 
   const toggleTaskCompletion = (id: string) => {
-    if (!firestore || !user || !tasks) return;
-    const tasksCollectionPath = `users/${user.uid}/todoTasks`;
     const task = tasks.find(t => t.id === id);
     if (!task) return;
-    const docRef = doc(firestore, tasksCollectionPath, id);
-    updateDocumentNonBlocking(docRef, { completed: !task.completed });
+    updateUserSessionTask(id, { completed: !task.completed });
   };
 
   const deleteTask = (id: string) => {
-    if (!firestore || !user) return;
-    const tasksCollectionPath = `users/${user.uid}/todoTasks`;
-    const docRef = doc(firestore, tasksCollectionPath, id);
-    deleteDocumentNonBlocking(docRef);
+    deleteUserSessionTask(id);
   };
 
   const contextValue = useMemo(() => ({
@@ -98,10 +79,6 @@ export const TaskProvider = ({ children }: { children: ReactNode }) => {
     deleteTask,
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }), [tasks]);
-
-  if (isLoading) {
-    return null;
-  }
 
   return (
     <TaskContext.Provider value={contextValue}>

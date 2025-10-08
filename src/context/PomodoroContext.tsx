@@ -1,8 +1,6 @@
 'use client';
 import React, { createContext, useState, useContext, ReactNode, useEffect, useCallback } from 'react';
-import { useUser, useFirestore } from '@/firebase';
-import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { collection } from 'firebase/firestore';
+import { useUserSession } from './UserSessionContext';
 
 const WORK_MINUTES = 25;
 const BREAK_MINUTES = 5;
@@ -24,23 +22,17 @@ export const PomodoroProvider = ({ children }: { children: ReactNode }) => {
   const [isActive, setIsActive] = useState(false);
   const [isBreak, setIsBreak] = useState(false);
   const [sessionStartTime, setSessionStartTime] = useState<Date | null>(null);
-
-  const { user } = useUser();
-  const firestore = useFirestore();
+  const { addStudySession } = useUserSession();
 
   const logStudySession = useCallback(() => {
-    if (!user || !firestore || !sessionStartTime) return;
-    
-    const sessionsCollectionPath = `users/${user.uid}/studySessions`;
-    const collectionRef = collection(firestore, sessionsCollectionPath);
-
-    addDocumentNonBlocking(collectionRef, {
-      userId: user.uid,
+    if (!sessionStartTime) return;
+    addStudySession({
+      id: sessionStartTime.toISOString(),
       startTime: sessionStartTime.toISOString(),
       endTime: new Date().toISOString(),
       duration: WORK_MINUTES,
     });
-  }, [user, firestore, sessionStartTime]);
+  }, [sessionStartTime, addStudySession]);
 
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;

@@ -3,7 +3,6 @@ import { Inter, Lexend, Pacifico } from 'next/font/google';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { cn } from '@/lib/utils';
-import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { ThemeProvider } from '@/components/theme-provider';
 
 const fontBody = Lexend({
@@ -63,10 +62,8 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <FirebaseClientProvider>
-            {children}
-            <Toaster />
-          </FirebaseClientProvider>
+          {children}
+          <Toaster />
         </ThemeProvider>
       </body>
     </html>

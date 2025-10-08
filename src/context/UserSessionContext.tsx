@@ -1,64 +1,92 @@
-
 'use client';
 
 import React, { createContext, useContext, ReactNode, useMemo, useEffect, useState } from 'react';
-import { useUser, useFirestore, useMemoFirebase } from '@/firebase';
-import { useCollection } from '@/firebase/firestore/use-collection';
-import { collection } from 'firebase/firestore';
 import type { GameScore } from './GameScoreContext';
 import type { Task } from './TaskContext';
 
 interface StudySession {
   id: string;
-  duration: number;
+  startTime: string;
   endTime: string;
+  duration: number;
 }
 
 interface UserSessionContextType {
   studySessions: StudySession[];
   tasks: Task[];
   gameScores: GameScore[];
-  isLoading: boolean;
+  addStudySession: (session: StudySession) => void;
+  addTask: (task: Task) => void;
+  updateTask: (taskId: string, updates: Partial<Task>) => void;
+  deleteTask: (taskId: string) => void;
 }
 
 const UserSessionContext = createContext<UserSessionContextType | undefined>(undefined);
 
 export const UserSessionProvider = ({ children }: { children: ReactNode }) => {
-  const { user, isUserLoading } = useUser();
-  const firestore = useFirestore();
+  const [studySessions, setStudySessions] = useState<StudySession[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [gameScores, setGameScores] = useState<GameScore[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const sessionsQuery = useMemoFirebase(() => {
-    if (!user || user.isAnonymous || !firestore) return null;
-    return collection(firestore, `users/${user.uid}/studySessions`);
-  }, [user, firestore]);
+  useEffect(() => {
+    try {
+      const storedSessions = localStorage.getItem('studySessions');
+      const storedTasks = localStorage.getItem('tasks');
+      const storedGameScores = localStorage.getItem('gameScores');
 
-  const tasksQuery = useMemoFirebase(() => {
-    if (!user || user.isAnonymous || !firestore) return null;
-    return collection(firestore, `users/${user.uid}/todoTasks`);
-  }, [user, firestore]);
+      if (storedSessions) setStudySessions(JSON.parse(storedSessions));
+      if (storedTasks) setTasks(JSON.parse(storedTasks));
+      if (storedGameScores) setGameScores(JSON.parse(storedGameScores));
+    } catch (error) {
+      console.error("Failed to load data from localStorage", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
-  const gameScoresQuery = useMemoFirebase(() => {
-    if (!user || user.isAnonymous || !firestore) return null;
-    return collection(firestore, `users/${user.uid}/gameScores`);
-  }, [user, firestore]);
+  const addStudySession = (session: StudySession) => {
+    setStudySessions(prev => {
+        const updated = [...prev, session];
+        localStorage.setItem('studySessions', JSON.stringify(updated));
+        return updated;
+    });
+  }
 
-  const { data: studySessions, isLoading: sessionsLoading } = useCollection<StudySession>(sessionsQuery);
-  const { data: tasks, isLoading: tasksLoading } = useCollection<Task>(tasksQuery);
-  const { data: gameScores, isLoading: gameScoresLoading } = useCollection<GameScore>(gameScoresQuery);
+  const addTask = (task: Task) => {
+    setTasks(prev => {
+        const updated = [...prev, task];
+        localStorage.setItem('tasks', JSON.stringify(updated));
+        return updated;
+    });
+  }
 
-  const isLoading = isUserLoading || sessionsLoading || tasksLoading || gameScoresLoading;
+  const updateTask = (taskId: string, updates: Partial<Task>) => {
+    setTasks(prev => {
+        const updated = prev.map(t => t.id === taskId ? {...t, ...updates} : t);
+        localStorage.setItem('tasks', JSON.stringify(updated));
+        return updated;
+    });
+  }
+
+  const deleteTask = (taskId: string) => {
+    setTasks(prev => {
+        const updated = prev.filter(t => t.id !== taskId);
+        localStorage.setItem('tasks', JSON.stringify(updated));
+        return updated;
+    });
+  }
   
   const contextValue = useMemo(() => ({
-    studySessions: studySessions || [],
-    tasks: tasks || [],
-    gameScores: gameScores || [],
-    isLoading,
-  }), [studySessions, tasks, gameScores, isLoading]);
+    studySessions,
+    tasks,
+    gameScores,
+    addStudySession,
+    addTask,
+    updateTask,
+    deleteTask,
+  }), [studySessions, tasks, gameScores]);
   
-  // This is the critical change. We will not render any children until the user is resolved
-  // AND all dependent data collections have finished their initial load.
-  // This prevents any downstream component from triggering a hook that depends on this context
-  // before the context is fully ready.
   if (isLoading) {
     return null;
   }

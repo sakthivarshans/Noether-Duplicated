@@ -14,7 +14,6 @@ import {
   Search,
   Timer,
   Upload,
-  User,
   Bed,
   Waypoints,
   BarChart3,

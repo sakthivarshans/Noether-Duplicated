@@ -1,9 +1,6 @@
 'use client';
 
-import React, { createContext, useState, useContext, ReactNode, useMemo } from 'react';
-import { useUser, useFirestore } from '@/firebase';
-import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { collection } from 'firebase/firestore';
+import React, { createContext, useState, useContext, ReactNode, useMemo, useEffect } from 'react';
 import { isThisWeek } from 'date-fns';
 import { useUserSession } from './UserSessionContext';
 
@@ -24,14 +21,24 @@ interface GameScoreContextType {
 const GameScoreContext = createContext<GameScoreContextType | undefined>(undefined);
 
 export const GameScoreProvider = ({ children }: { children: ReactNode }) => {
-  const { user } = useUser();
-  const firestore = useFirestore();
-  const { gameScores, isLoading } = useUserSession();
+  const [scores, setScores] = useState<GameScore[]>([]);
+
+  useEffect(() => {
+    // Load scores from localStorage on mount
+    try {
+      const storedScores = localStorage.getItem('gameScores');
+      if (storedScores) {
+        setScores(JSON.parse(storedScores));
+      }
+    } catch (error) {
+      console.error("Failed to parse scores from localStorage", error);
+      setScores([]);
+    }
+  }, []);
 
   const weeklyScores = useMemo(() => {
-    if (!gameScores) return [];
-    return gameScores.filter(score => isThisWeek(new Date(score.playedDate), { weekStartsOn: 1 }));
-  }, [gameScores]);
+    return scores.filter(score => isThisWeek(new Date(score.playedDate), { weekStartsOn: 1 }));
+  }, [scores]);
 
   const totalScore = useMemo(() => {
     return weeklyScores.reduce((sum, score) => sum + score.score, 0);
@@ -44,16 +51,22 @@ export const GameScoreProvider = ({ children }: { children: ReactNode }) => {
   };
   
   const addScore = (gameName: string, score: number) => {
-    if (!firestore || !user) return;
-    const scoresCollectionPath = `users/${user.uid}/gameScores`;
-    const newScore = {
+    const newScore: GameScore = {
+      id: new Date().toISOString(), // Simple unique ID
       gameName,
       score,
       playedDate: new Date().toISOString(),
-      userId: user.uid,
     };
-    const collectionRef = collection(firestore, scoresCollectionPath);
-    addDocumentNonBlocking(collectionRef, newScore);
+    
+    setScores(prevScores => {
+        const updatedScores = [...prevScores, newScore];
+        try {
+            localStorage.setItem('gameScores', JSON.stringify(updatedScores));
+        } catch (error) {
+            console.error("Failed to save scores to localStorage", error);
+        }
+        return updatedScores;
+    });
   };
 
   const contextValue = useMemo(() => ({
@@ -63,10 +76,6 @@ export const GameScoreProvider = ({ children }: { children: ReactNode }) => {
     addScore,
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }), [weeklyScores, totalScore]);
-  
-  if (isLoading) {
-      return null;
-  }
 
   return (
     <GameScoreContext.Provider value={contextValue}>

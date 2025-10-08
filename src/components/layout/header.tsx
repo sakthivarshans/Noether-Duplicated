@@ -8,7 +8,6 @@ import {
 
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { UserNav } from './user-nav';
 import Mascot from '../mascot';
 import { useGameScores } from '@/context/GameScoreContext';
 import { ThemeToggle } from '../theme-toggle';
@@ -70,7 +69,6 @@ export function Header() {
         <Award className="h-5 w-5 text-primary" />
         <span className="font-bold text-lg">{totalScore}</span>
       </div>
-      <UserNav />
     </header>
   );
 }
