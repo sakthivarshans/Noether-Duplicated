@@ -6,7 +6,7 @@ import { useCollection } from '@/firebase/firestore/use-collection';
 import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { collection } from 'firebase/firestore';
 import { useFirestore, useMemoFirebase } from '@/firebase/provider';
-import { isThisWeek, startOfWeek } from 'date-fns';
+import { isThisWeek } from 'date-fns';
 
 export interface GameScore {
   id: string;
@@ -38,10 +38,11 @@ export const GameScoreProvider = ({ children }: { children: ReactNode }) => {
     return collection(firestore, scoresCollectionPath);
   }, [scoresCollectionPath, firestore]);
 
-  const { data: allScores } = useCollection<Omit<GameScore, 'id'>>(scoresQuery);
+  const { data: allScores } = useCollection<GameScore>(scoresQuery);
 
   const weeklyScores = useMemo(() => {
-    return (allScores || []).filter(score => isThisWeek(new Date(score.playedDate), { weekStartsOn: 1 }));
+    if (!allScores) return [];
+    return allScores.filter(score => isThisWeek(new Date(score.playedDate), { weekStartsOn: 1 }));
   }, [allScores]);
 
   const totalScore = useMemo(() => {
