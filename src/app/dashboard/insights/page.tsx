@@ -7,7 +7,7 @@ import { collection } from 'firebase/firestore';
 import { useTasks } from '@/context/TaskContext';
 import { useGameScores } from '@/context/GameScoreContext';
 import { useMemo, useState } from 'react';
-import { isThisWeek, parseISO, subDays, format, isWithinInterval } from 'date-fns';
+import { isThisWeek, parseISO, subDays, format, isWithinInterval, isToday, getHours } from 'date-fns';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer, LabelList } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -18,14 +18,14 @@ interface StudySession {
   endTime: string;
 }
 
-type TimeRange = 'this_week' | 'last_15_days';
+type TimeRange = 'today' | 'this_week' | 'last_15_days';
 
 const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 export default function InsightsPage() {
   const { user } = useUser();
   const firestore = useFirestore();
-  const [timeRange, setTimeRange] = useState<TimeRange>('this_week');
+  const [timeRange, setTimeRange] = useState<TimeRange>('today');
 
   const sessionsCollectionPath = useMemo(() => {
     if (!user) return null;
@@ -42,6 +42,9 @@ export default function InsightsPage() {
   const filteredSessions = useMemo(() => {
     if (!allSessions) return [];
     const now = new Date();
+    if (timeRange === 'today') {
+      return allSessions.filter(session => isToday(parseISO(session.endTime)));
+    }
     if (timeRange === 'this_week') {
       return allSessions.filter(session => isThisWeek(parseISO(session.endTime), { weekStartsOn: 0 }));
     } else { // 'last_15_days'
@@ -55,6 +58,14 @@ export default function InsightsPage() {
   }, [filteredSessions]);
   
   const studyDataByDay = useMemo(() => {
+    if (timeRange === 'today') {
+        const data = Array.from({ length: 24 }, (_, i) => ({ name: `${i}:00`, minutes: 0 }));
+        filteredSessions.forEach(session => {
+            const hour = getHours(parseISO(session.endTime));
+            data[hour].minutes += session.duration;
+        });
+        return data;
+    }
     if (timeRange === 'this_week') {
         const data = weekDays.map(day => ({ name: day, minutes: 0 }));
         filteredSessions.forEach(session => {
@@ -154,6 +165,7 @@ export default function InsightsPage() {
                   <SelectValue placeholder="Select a range" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="today">Today</SelectItem>
                   <SelectItem value="this_week">This Week</SelectItem>
                   <SelectItem value="last_15_days">Last 15 Days</SelectItem>
                 </SelectContent>
@@ -168,6 +180,13 @@ export default function InsightsPage() {
                 tickLine={false}
                 tickMargin={10}
                 axisLine={false}
+                tickFormatter={(value, index) => {
+                  if (timeRange === 'today') {
+                    // Show every 4th hour
+                    return index % 4 === 0 ? value : '';
+                  }
+                  return value;
+                }}
                 tick={{ fontSize: 12 }}
               />
                <YAxis
@@ -196,3 +215,5 @@ export default function InsightsPage() {
     </div>
   );
 }
+
+    
