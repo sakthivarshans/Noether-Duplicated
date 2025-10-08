@@ -9,6 +9,7 @@ import { summarizeAndHighlightDocument, SummarizeAndHighlightDocumentOutput } fr
 import { generateFlashcardsFromDocument } from '@/ai/flows/generate-flashcards-from-document';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Progress } from '@/components/ui/progress';
 
 type Flashcard = {
   front: string;
@@ -24,6 +25,7 @@ export default function UploadPage() {
   const [isGeneratingFlashcards, setIsGeneratingFlashcards] = useState(false);
   const [flippedStates, setFlippedStates] = useState<boolean[]>([]);
   const { toast } = useToast();
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -31,10 +33,32 @@ export default function UploadPage() {
       setFileName(file.name);
       setResult(null);
       setGeneratedFlashcards([]);
+      setUploadProgress(0); // Start progress at 0
+
       const reader = new FileReader();
+      
+      reader.onprogress = (event) => {
+        if (event.lengthComputable) {
+          const percentage = Math.round((event.loaded / event.total) * 100);
+          setUploadProgress(percentage);
+        }
+      };
+
       reader.onload = (loadEvent) => {
         setFileDataUri(loadEvent.target?.result as string);
+        setUploadProgress(100); // Ensure it completes
+        setTimeout(() => setUploadProgress(null), 1000); // Hide progress bar after a short delay
       };
+
+      reader.onerror = () => {
+        toast({
+            variant: "destructive",
+            title: "File Reading Error",
+            description: "There was an error reading your file.",
+        });
+        setUploadProgress(null);
+      }
+
       reader.readAsDataURL(file);
     }
   };
@@ -133,8 +157,14 @@ export default function UploadPage() {
               </span>
               <Input id="file-upload" name="file-upload" type="file" className="hidden" onChange={handleFileChange} accept=".pdf,.pptx" />
             </label>
+            {uploadProgress !== null && (
+              <div className="mt-2 w-full">
+                <Progress value={uploadProgress} className="w-full" />
+                <p className="text-sm text-muted-foreground text-center mt-1">{uploadProgress}%</p>
+              </div>
+            )}
           </div>
-          <Button onClick={handleUpload} disabled={!fileName || isProcessing} className="w-full sm:w-auto">
+          <Button onClick={handleUpload} disabled={!fileName || isProcessing || uploadProgress !== null} className="w-full sm:w-auto">
             {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Zap className="mr-2 h-4 w-4" />}
             {isProcessing ? 'Processing...' : 'Generate Insights'}
           </Button>
@@ -266,3 +296,5 @@ export default function UploadPage() {
     </div>
   );
 }
+
+    
