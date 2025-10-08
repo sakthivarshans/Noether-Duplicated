@@ -4,9 +4,10 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Upload, Zap, BrainCircuit, Loader2, RotateCw } from 'lucide-react';
+import { Upload, Zap, Loader2, RotateCw } from 'lucide-react';
 import { generateFlashcardsFromDocument, GenerateFlashcardsFromDocumentOutput } from '@/ai/flows/generate-flashcards-from-document';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from '@/hooks/use-toast';
 
 export default function FlashcardsPage() {
   const [fileName, setFileName] = useState<string | null>(null);
@@ -14,6 +15,7 @@ export default function FlashcardsPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [result, setResult] = useState<GenerateFlashcardsFromDocumentOutput | null>(null);
   const [flippedStates, setFlippedStates] = useState<boolean[]>([]);
+  const { toast } = useToast();
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -23,36 +25,34 @@ export default function FlashcardsPage() {
       const reader = new FileReader();
       reader.onload = (loadEvent) => {
         const fileContent = loadEvent.target?.result as string;
-        // For simplicity, we are assuming text content.
-        // For PDF/DOCX, more complex parsing is needed.
-        // We'll use a simplified version for this example.
-        if (file.type === "application/pdf" || file.type.includes("word")) {
-             // In a real app, you would use a library like pdf.js or mammoth.js to extract text.
-             // For this prototype, we'll just use a placeholder.
-             setDocumentContent(`Content of ${file.name}`);
-        } else {
-            setDocumentContent(fileContent);
-        }
-        
+        setDocumentContent(fileContent);
       };
-      if (file.type === "application/pdf" || file.type.includes("word")) {
-        reader.readAsDataURL(file); // Reading as data URL for simplicity
-      } else {
-        reader.readAsText(file);
+       reader.onerror = () => {
+        toast({
+            variant: "destructive",
+            title: "File Reading Error",
+            description: "There was an error reading your file.",
+        });
       }
+      reader.readAsText(file);
     }
   };
 
   const handleGenerate = async () => {
     if (!documentContent) return;
     setIsProcessing(true);
+    setResult(null);
     try {
       const response = await generateFlashcardsFromDocument({ documentContent });
       setResult(response);
       setFlippedStates(new Array(response.flashcards.length).fill(false));
     } catch (e) {
       console.error(e);
-      // You might want to show a toast notification here
+      toast({
+        variant: "destructive",
+        title: "Uh oh! Something went wrong.",
+        description: "Could not generate flashcards. The AI might not be able to process this file's content.",
+      });
     } finally {
       setIsProcessing(false);
     }
@@ -120,7 +120,7 @@ export default function FlashcardsPage() {
                         <CardHeader>
                             <CardTitle className="text-lg">Question</CardTitle>
                         </CardHeader>
-                        <CardContent className="flex-grow flex items-center justify-center">
+                        <CardContent className="flex-grow flex items-center justify-center p-4">
                             <p>{flashcard.front}</p>
                         </CardContent>
                         <CardFooter>
@@ -132,7 +132,7 @@ export default function FlashcardsPage() {
                         <CardHeader>
                              <CardTitle className="text-lg">Insights</CardTitle>
                         </CardHeader>
-                        <CardContent className="flex-grow flex items-center justify-center">
+                        <CardContent className="flex-grow flex items-center justify-center p-4">
                             <p>{flashcard.back}</p>
                         </CardContent>
                         <CardFooter>
