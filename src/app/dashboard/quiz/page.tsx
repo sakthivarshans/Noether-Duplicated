@@ -145,14 +145,14 @@ export default function QuizPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="question-count">Number of Questions (1-50)</Label>
+                <Label htmlFor="question-count">Number of Questions (1-20)</Label>
                 <Input
                   id="question-count"
                   type="number"
                   value={questionCount}
-                  onChange={(e) => setQuestionCount(Math.max(1, Math.min(50, Number(e.target.value))))}
+                  onChange={(e) => setQuestionCount(Math.max(1, Math.min(20, Number(e.target.value))))}
                   min="1"
-                  max="50"
+                  max="20"
                   className="w-full"
                 />
               </div>

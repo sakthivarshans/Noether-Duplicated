@@ -16,7 +16,7 @@ const GenerateQuizFromDocumentInputSchema = z.object({
     .describe(
       "A document (PDF or PPTX), as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
     ),
-  questionCount: z.number().min(1).max(50).describe('The number of questions to generate.'),
+  questionCount: z.number().min(1).max(20).describe('The number of questions to generate.'),
 });
 export type GenerateQuizFromDocumentInput = z.infer<typeof GenerateQuizFromDocumentInputSchema>;
 
