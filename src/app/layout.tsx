@@ -31,7 +31,7 @@ const faviconSvg = `
   </svg>
 `.trim();
 
-const faviconDataUri = `data:image/svg+xml;base64,${btoa(faviconSvg)}`;
+const faviconDataUri = `data:image/svg+xml,${encodeURIComponent(faviconSvg)}`;
 
 export const metadata: Metadata = {
   title: 'Noether - Simply and Lovely Learning',
