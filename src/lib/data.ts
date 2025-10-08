@@ -28,16 +28,16 @@ export const quotes: { text: string; author: string }[] = [
 ];
 
 export const musicTracks = [
-    { id: 1, title: "Peaceful Morning", artist: "Instrumental", duration: "3:45", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" },
-    { id: 2, title: "Lofi Study Beats", artist: "Chillhop", duration: "2:50", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3" },
-    { id: 3, title: "Deep Focus", artist: "Ambient", duration: "4:10", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3" },
-    { id: 4, title: "Quiet Cafe", artist: "Jazz", duration: "3:20", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3" },
-    { id: 5, title: "Rainy Day", artist: "Nature Sounds", duration: "5:00", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3" },
-    { id: 6, title: "Ocean Waves", artist: "Nature Sounds", duration: "4:30", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3" },
-    { id: 7, title: "Forest Stream", artist: "Nature Sounds", duration: "4:15", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-7.mp3" },
-    { id: 8, title: "Piano Dreams", artist: "Classical", duration: "2:55", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3" },
-    { id: 9, title: "Ambient Flow", artist: "Electronic", duration: "3:50", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-9.mp3"},
-    { id: 10, title: "Cosmic Drift", artist: "Ambient", duration: "5:20", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-10.mp3"}
+    { id: 1, title: "Peaceful Morning", artist: "Purrple Cat", duration: "2:42", url: "https://cdn.pixabay.com/download/audio/2022/02/07/audio_62343419a4.mp3?filename=purrple-cat-peaceful-morning.mp3" },
+    { id: 2, title: "Lofi Study Beats", artist: "FASSounds", duration: "2:51", url: "https://cdn.pixabay.com/download/audio/2022/10/24/audio_a84a86f874.mp3?filename=lofi-study-122933.mp3" },
+    { id: 3, title: "Deep Focus", artist: "Zen Yoga", duration: "3:34", url: "https://cdn.pixabay.com/download/audio/2024/02/20/audio_51c6181f08.mp3?filename=deep-focus-for-concentration-and-studying-191060.mp3" },
+    { id: 4, title: "Quiet Cafe", artist: "Daystar", duration: "3:36", url: "https://cdn.pixabay.com/download/audio/2021/11/26/audio_24e3391a05.mp3?filename=a-small-miracle-15543.mp3" },
+    { id: 5, title: "Rainy Day", artist: "Gushito", duration: "2:13", url: "https://cdn.pixabay.com/download/audio/2022/11/17/audio_82a392ba80.mp3?filename=rain-and-nostalgia-version-60s-127117.mp3" },
+    { id: 6, title: "Ocean Waves", artist: "SoundsForYou", duration: "1:00", url: "https://cdn.pixabay.com/download/audio/2022/07/16/audio_488a3852f6.mp3?filename=ocean-waves-112906.mp3" },
+    { id: 7, title: "Forest Stream", artist: "Soundslikewillem", duration: "2:33", url: "https://cdn.pixabay.com/download/audio/2024/05/27/audio_333d455d61.mp3?filename=forest-stream-sound-effect-for-background-video-and-meditation-208493.mp3" },
+    { id: 8, title: "Piano Dreams", artist: "Grand Project", duration: "2:15", url: "https://cdn.pixabay.com/download/audio/2022/05/17/audio_2d326541f7.mp3?filename=piano-moment-9835.mp3" },
+    { id: 9, title: "Ambient Flow", artist: "AlexiAction", duration: "5:22", url: "https://cdn.pixabay.com/download/audio/2023/07/04/audio_a14b534b17.mp3?filename=spirit-blossom-1552spirit-blossom-155227.mp3"},
+    { id: 10, title: "Cosmic Drift", artist: "SergeQuadrado", duration: "2:35", url: "https://cdn.pixabay.com/download/audio/2022/06/07/audio_a088739f40.mp3?filename=space-chillout-11544.mp3"}
 ];
 
 export const games = [
