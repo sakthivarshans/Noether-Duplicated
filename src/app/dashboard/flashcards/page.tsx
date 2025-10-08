@@ -133,7 +133,7 @@ export default function FlashcardsPage() {
                     <Card className="absolute w-full h-full backface-hidden rotate-y-180 flex flex-col justify-between bg-secondary">
                         <div>
                             <CardHeader>
-                                 <CardTitle className="text-lg">Answer</CardTitle>
+                                 <CardTitle className="text-lg">Insights</CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <p>{flashcard.back}</p>
