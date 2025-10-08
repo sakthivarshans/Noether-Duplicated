@@ -27,15 +27,10 @@ export const GameScoreProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useUser();
   const firestore = useFirestore();
 
-  const scoresCollectionPath = useMemo(() => {
-    if (!user) return null;
-    return `users/${user.uid}/gameScores`;
-  }, [user]);
-
   const scoresQuery = useMemoFirebase(() => {
-    if (!scoresCollectionPath || !firestore) return null;
-    return collection(firestore, scoresCollectionPath);
-  }, [scoresCollectionPath, firestore]);
+    if (!user || !firestore) return null;
+    return collection(firestore, `users/${user.uid}/gameScores`);
+  }, [user, firestore]);
 
   const { data: allScores, isLoading: areScoresLoading } = useCollection<GameScore>(scoresQuery);
 
@@ -55,7 +50,8 @@ export const GameScoreProvider = ({ children }: { children: ReactNode }) => {
   };
   
   const addScore = (gameName: string, score: number) => {
-    if (!firestore || !scoresCollectionPath || !user) return;
+    if (!firestore || !user) return;
+    const scoresCollectionPath = `users/${user.uid}/gameScores`;
     const newScore = {
       gameName,
       score,
@@ -74,6 +70,11 @@ export const GameScoreProvider = ({ children }: { children: ReactNode }) => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }), [weeklyScores, totalScore, areScoresLoading]);
 
+  // Do not render children until the initial loading is complete and we have a user.
+  // This prevents downstream components from accessing context values before they are ready.
+  if (areScoresLoading && !allScores) {
+    return null;
+  }
 
   return (
     <GameScoreContext.Provider value={contextValue}>
