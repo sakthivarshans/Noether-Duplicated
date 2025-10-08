@@ -42,7 +42,7 @@ export default function SignupPage() {
 
     try {
       await signUpWithEmail(auth, email, password, name);
-      // onAuthStateChanged will handle the redirect to dashboard
+      // Successful signup will trigger onAuthStateChanged, and the useEffect above will redirect.
     } catch (error: any) {
       console.error(error);
       toast({

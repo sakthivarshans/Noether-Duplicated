@@ -42,7 +42,7 @@ export default function LoginPage() {
 
     try {
       await signInWithEmail(auth, email, password);
-      // onAuthStateChanged will redirect
+      // Successful login will trigger onAuthStateChanged, and the useEffect above will redirect.
     } catch (error: any) {
       console.error(error);
       toast({
