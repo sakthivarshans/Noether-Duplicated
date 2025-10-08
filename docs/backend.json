@@ -47,6 +47,19 @@
           "type": "string",
           "description": "URL of the user's profile image.",
           "format": "uri"
+        },
+        "skillsDomain": {
+          "type": "string",
+          "description": "The user's primary skill domain (e.g., Software Engineering)."
+        },
+        "expertiseAreas": {
+          "type": "string",
+          "description": "A comma-separated list of the user's areas of expertise."
+        },
+        "linkedinUrl": {
+          "type": "string",
+          "description": "URL of the user's LinkedIn profile.",
+          "format": "uri"
         }
       },
       "required": [

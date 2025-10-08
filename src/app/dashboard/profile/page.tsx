@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Upload, Save } from 'lucide-react';
+import { Upload, Save, Linkedin } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/firebase';
 
@@ -56,6 +56,20 @@ export default function ProfilePage() {
               <Label htmlFor="college">College/University</Label>
               <Input id="college" placeholder="e.g., University of Technology" />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="skills-domain">Skills Domain</Label>
+              <Input id="skills-domain" placeholder="e.g., Software Engineering, Data Science" />
+            </div>
+            <div className="relative space-y-2">
+              <Label htmlFor="linkedin">LinkedIn Profile URL</Label>
+              <Linkedin className="absolute left-3 top-9 h-5 w-5 text-muted-foreground" />
+              <Input id="linkedin" type="url" placeholder="https://linkedin.com/in/your-profile" className="pl-10" />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="expertise-area">Expertise Area</Label>
+            <Textarea id="expertise-area" placeholder="Add one or more areas of expertise, separated by commas (e.g., React, Python, Cloud Computing)" />
           </div>
 
           <div className="space-y-2">
