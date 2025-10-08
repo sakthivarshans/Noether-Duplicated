@@ -18,6 +18,7 @@ import {
   Waypoints,
   BarChart3,
   LogOut,
+  FileJson,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Mascot from '@/components/mascot';
@@ -78,6 +79,8 @@ export function Sidebar() {
               {navItems.map(item => <NavLink key={item.href} {...item} />)}
               <li className="px-3 py-2 text-xs font-semibold text-muted-foreground/80 uppercase tracking-wider">Tools</li>
               {toolsItems.sort((a, b) => a.label.localeCompare(b.label)).map(item => <NavLink key={item.href} {...item} />)}
+               <li className="px-3 py-2 text-xs font-semibold text-muted-foreground/80 uppercase tracking-wider">Backend</li>
+               <NavLink href="/dashboard/schema" label="Schema" icon={FileJson} />
             </ul>
           </nav>
         </div>
