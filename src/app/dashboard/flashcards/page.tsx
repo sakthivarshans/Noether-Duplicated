@@ -5,53 +5,82 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Upload, Zap, Loader2, RotateCw } from 'lucide-react';
+import { summarizeAndHighlightDocument, SummarizeAndHighlightDocumentOutput } from '@/ai/flows/summarize-and-highlight-document';
 import { generateFlashcardsFromDocument, GenerateFlashcardsFromDocumentOutput } from '@/ai/flows/generate-flashcards-from-document';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
+import { Progress } from '@/components/ui/progress';
 
 export default function FlashcardsPage() {
   const [fileName, setFileName] = useState<string | null>(null);
-  const [documentContent, setDocumentContent] = useState<string>('');
+  const [fileDataUri, setFileDataUri] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [result, setResult] = useState<GenerateFlashcardsFromDocumentOutput | null>(null);
   const [flippedStates, setFlippedStates] = useState<boolean[]>([]);
   const { toast } = useToast();
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       setFileName(file.name);
       setResult(null);
+      setUploadProgress(0);
+
       const reader = new FileReader();
-      reader.onload = (loadEvent) => {
-        const fileContent = loadEvent.target?.result as string;
-        setDocumentContent(fileContent);
+      
+      reader.onprogress = (event) => {
+        if (event.lengthComputable) {
+          const percentage = Math.round((event.loaded / event.total) * 100);
+          setUploadProgress(percentage);
+        }
       };
-       reader.onerror = () => {
+
+      reader.onload = (loadEvent) => {
+        setFileDataUri(loadEvent.target?.result as string);
+        setUploadProgress(100);
+        setTimeout(() => setUploadProgress(null), 1000);
+      };
+
+      reader.onerror = () => {
         toast({
             variant: "destructive",
             title: "File Reading Error",
             description: "There was an error reading your file.",
         });
+        setUploadProgress(null);
       }
-      reader.readAsText(file);
+
+      reader.readAsDataURL(file);
     }
   };
 
   const handleGenerate = async () => {
-    if (!documentContent) return;
+    if (!fileDataUri) return;
     setIsProcessing(true);
     setResult(null);
     try {
-      const response = await generateFlashcardsFromDocument({ documentContent });
+      // Step 1: Get summary from the main summarization flow
+      const summaryResponse = await summarizeAndHighlightDocument({ documentDataUri: fileDataUri });
+      
+      if (!summaryResponse || !summaryResponse.summary) {
+        throw new Error("Could not generate a summary from the document.");
+      }
+
+      // Step 2: Generate flashcards from the summary
+      const response = await generateFlashcardsFromDocument({ documentContent: summaryResponse.summary });
       setResult(response);
       setFlippedStates(new Array(response.flashcards.length).fill(false));
+      toast({
+        title: 'Flashcards Generated!',
+        description: `Successfully created ${response.flashcards.length} flashcards from the document summary.`,
+      });
     } catch (e) {
       console.error(e);
       toast({
         variant: "destructive",
         title: "Uh oh! Something went wrong.",
-        description: "Could not generate flashcards. The AI might not be able to process this file's content.",
+        description: "Could not generate flashcards. The document might be too large or in an unsupported format.",
       });
     } finally {
       setIsProcessing(false);
@@ -98,10 +127,16 @@ export default function FlashcardsPage() {
                   {fileName || "Drag & drop a file or click to upload"}
                 </span>
               </span>
-              <Input id="file-upload" name="file-upload" type="file" className="hidden" onChange={handleFileChange} accept=".txt,.md" />
+              <Input id="file-upload" name="file-upload" type="file" className="hidden" onChange={handleFileChange} accept=".pdf,.pptx,.txt,.md" />
             </label>
+            {uploadProgress !== null && (
+              <div className="mt-2 w-full">
+                <Progress value={uploadProgress} className="w-full" />
+                <p className="text-sm text-muted-foreground text-center mt-1">{uploadProgress}%</p>
+              </div>
+            )}
           </div>
-          <Button onClick={handleGenerate} disabled={!fileName || isProcessing} className="w-full sm:w-auto">
+          <Button onClick={handleGenerate} disabled={!fileName || isProcessing || uploadProgress !== null} className="w-full sm:w-auto">
             {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Zap className="mr-2 h-4 w-4" />}
             {isProcessing ? 'Generating...' : 'Generate Flashcards'}
           </Button>
