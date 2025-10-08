@@ -1,17 +1,17 @@
 'use client';
 
-import React, { createContext, useState, useContext, ReactNode, useEffect, useMemo } from 'react';
+import React, { createContext, useContext, ReactNode, useEffect, useMemo, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { differenceInMinutes } from 'date-fns';
-import { useUser } from '@/firebase';
-import { useCollection } from '@/firebase/firestore/use-collection';
+import { useUser, useFirestore, useMemoFirebase } from '@/firebase';
 import {
   addDocumentNonBlocking,
   updateDocumentNonBlocking,
   deleteDocumentNonBlocking,
 } from '@/firebase/non-blocking-updates';
-import { collection, doc, where, query } from 'firebase/firestore';
-import { useFirestore, useMemoFirebase } from '@/firebase/provider';
+import { collection, doc } from 'firebase/firestore';
+import { useUserSession } from './UserSessionContext';
+
 
 export interface Task {
   id: string; // Changed from number to string for Firestore
@@ -31,19 +31,11 @@ interface TaskContextType {
 const TaskContext = createContext<TaskContextType | undefined>(undefined);
 
 export const TaskProvider = ({ children }: { children: ReactNode }) => {
-  const { user, isUserLoading } = useUser();
+  const { user } = useUser();
   const firestore = useFirestore();
+  const { tasks, isLoading } = useUserSession();
   const { toast } = useToast();
   const [notifiedTasks, setNotifiedTasks] = useState<string[]>([]);
-
-  const tasksQuery = useMemoFirebase(() => {
-    if (isUserLoading || !user || user.isAnonymous || !firestore) {
-      return null;
-    }
-    return collection(firestore, `users/${user.uid}/todoTasks`);
-  }, [user, firestore, isUserLoading]);
-
-  const { data: tasks = [], isLoading } = useCollection<Omit<Task, 'id'>>(tasksQuery);
 
   useEffect(() => {
     const checkDeadlines = () => {
@@ -84,9 +76,9 @@ export const TaskProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const toggleTaskCompletion = (id: string) => {
-    if (!firestore || !user) return;
+    if (!firestore || !user || !tasks) return;
     const tasksCollectionPath = `users/${user.uid}/todoTasks`;
-    const task = tasks?.find(t => t.id === id);
+    const task = tasks.find(t => t.id === id);
     if (!task) return;
     const docRef = doc(firestore, tasksCollectionPath, id);
     updateDocumentNonBlocking(docRef, { completed: !task.completed });
@@ -107,8 +99,8 @@ export const TaskProvider = ({ children }: { children: ReactNode }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }), [tasks]);
 
-  if (isUserLoading) {
-      return null;
+  if (isLoading) {
+    return null;
   }
 
   return (

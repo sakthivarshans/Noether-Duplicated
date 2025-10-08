@@ -1,11 +1,11 @@
 'use client';
 
-import React, { createContext, useState, useContext, ReactNode, useEffect, useMemo } from 'react';
-import { useUser, useFirestore, useMemoFirebase } from '@/firebase';
-import { useCollection } from '@/firebase/firestore/use-collection';
+import React, { createContext, useState, useContext, ReactNode, useMemo } from 'react';
+import { useUser, useFirestore } from '@/firebase';
 import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { collection } from 'firebase/firestore';
 import { isThisWeek } from 'date-fns';
+import { useUserSession } from './UserSessionContext';
 
 export interface GameScore {
   id: string;
@@ -24,32 +24,23 @@ interface GameScoreContextType {
 const GameScoreContext = createContext<GameScoreContextType | undefined>(undefined);
 
 export const GameScoreProvider = ({ children }: { children: ReactNode }) => {
-  const { user, isUserLoading } = useUser();
+  const { user } = useUser();
   const firestore = useFirestore();
-
-  const scoresQuery = useMemoFirebase(() => {
-    // CRITICAL FIX: Ensure user exists, is not loading, AND is not anonymous before creating a query.
-    if (isUserLoading || !user || user.isAnonymous || !firestore) {
-      return null;
-    }
-    return collection(firestore, `users/${user.uid}/gameScores`);
-  }, [user, firestore, isUserLoading]);
-
-  const { data: allScores, isLoading: areScoresLoading } = useCollection<GameScore>(scoresQuery);
+  const { gameScores, isLoading } = useUserSession();
 
   const weeklyScores = useMemo(() => {
-    if (!allScores) return [];
-    return allScores.filter(score => isThisWeek(new Date(score.playedDate), { weekStartsOn: 1 }));
-  }, [allScores]);
+    if (!gameScores) return [];
+    return gameScores.filter(score => isThisWeek(new Date(score.playedDate), { weekStartsOn: 1 }));
+  }, [gameScores]);
 
   const totalScore = useMemo(() => {
     return weeklyScores.reduce((sum, score) => sum + score.score, 0);
   }, [weeklyScores]);
 
   const getHighScore = (gameName: string) => {
-    const gameScores = weeklyScores.filter(s => s.gameName === gameName);
-    if (gameScores.length === 0) return 0;
-    return Math.max(...gameScores.map(s => s.score));
+    const gameScoresForGame = weeklyScores.filter(s => s.gameName === gameName);
+    if (gameScoresForGame.length === 0) return 0;
+    return Math.max(...gameScoresForGame.map(s => s.score));
   };
   
   const addScore = (gameName: string, score: number) => {
@@ -73,7 +64,7 @@ export const GameScoreProvider = ({ children }: { children: ReactNode }) => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }), [weeklyScores, totalScore]);
   
-  if (isUserLoading) {
+  if (isLoading) {
       return null;
   }
 

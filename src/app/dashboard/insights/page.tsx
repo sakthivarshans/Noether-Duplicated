@@ -1,9 +1,6 @@
 'use client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Clock, CheckCircle, Gamepad2 } from 'lucide-react';
-import { useUser, useFirestore, useMemoFirebase } from '@/firebase';
-import { useCollection } from '@/firebase/firestore/use-collection';
-import { collection } from 'firebase/firestore';
 import { useTasks } from '@/context/TaskContext';
 import { useGameScores } from '@/context/GameScoreContext';
 import { useMemo, useState } from 'react';
@@ -11,6 +8,7 @@ import { isThisWeek, parseISO, subDays, format, isWithinInterval, isToday, getHo
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer, LabelList } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useUserSession } from '@/context/UserSessionContext';
 
 interface StudySession {
   id: string;
@@ -23,21 +21,8 @@ type TimeRange = 'today' | 'this_week' | 'last_15_days';
 const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 export default function InsightsPage() {
-  const { user } = useUser();
-  const firestore = useFirestore();
   const [timeRange, setTimeRange] = useState<TimeRange>('today');
-
-  const sessionsCollectionPath = useMemo(() => {
-    if (!user) return null;
-    return `users/${user.uid}/studySessions`;
-  }, [user]);
-
-  const sessionsQuery = useMemoFirebase(() => {
-    if (!sessionsCollectionPath || !firestore) return null;
-    return collection(firestore, sessionsCollectionPath);
-  }, [sessionsCollectionPath, firestore]);
-
-  const { data: allSessions } = useCollection<StudySession>(sessionsQuery);
+  const { studySessions: allSessions } = useUserSession();
 
   const filteredSessions = useMemo(() => {
     if (!allSessions) return [];
@@ -215,5 +200,3 @@ export default function InsightsPage() {
     </div>
   );
 }
-
-    
