@@ -1,207 +1,197 @@
 /**
- * @fileoverview Firestore Security Rules for the application.
+ * @fileoverview Firestore Security Rules for the Noether application.
  *
  * Core Philosophy:
- * This ruleset enforces a strict user-ownership model. Users can only read and write data
- * associated with their own user ID.  Data validation is relaxed in this prototyping phase.
+ * This ruleset enforces a strict user-ownership model for all data. Each user has complete control over their own data tree,
+ * and no user can access or modify another user's data.
  *
  * Data Structure:
- * All data is nested under /users/{userId}, creating a clear ownership hierarchy.
+ * All data is nested under /users/{userId}, which creates a clear separation between users and their associated data.
+ * This structure supports scalable authorization and simplifies security rules.
  *
  * Key Security Decisions:
- * - Users can only list studySessions belonging to themselves.
- * - All subcollections under /users/{userId} follow the ownership model.
+ * - All data is private and user-specific. There are no shared or public collections.
+ * - List operations are restricted to the owner of the data.
+ * - All write operations (create, update, delete) are restricted to the owner of the data.
  *
  * Denormalization for Authorization:
- *  - The `userId` field is present in all subcollection documents. This avoids the need for
- *    costly `get()` calls to parent documents to verify ownership.
+ *  - The `userId` is included in every document to easily verify ownership.
+ *  - The `userId` path parameter is matched against the `request.auth.uid` to ensure data consistency.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    /**
-     * @description Checks if the request is authenticated.
-     * @return {boolean} True if the request is authenticated, false otherwise.
-     */
+    // Helper function to determine if the request is made by a signed-in user.
     function isSignedIn() {
       return request.auth != null;
     }
 
-    /**
-     * @description Checks if the authenticated user is the owner of the resource.
-     * @param {string} userId The user ID to compare against the authenticated user's ID.
-     * @return {boolean} True if the user is the owner, false otherwise.
-     */
+    // Helper function to determine if the request is made by the owner of the resource.
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    /**
-     * @description Checks if the authenticated user is the owner of the existing resource.
-     * @param {string} userId The user ID to compare against the authenticated user's ID.
-     * @return {boolean} True if the user is the owner and the resource exists, false otherwise.
-     */
+    // Helper function to determine if the request is made by the existing owner of the resource.
     function isExistingOwner(userId) {
       return isOwner(userId) && resource != null;
     }
 
     /**
-     * @description Rules for the /users/{userId} collection.
+     * @description Grants access to user profile data only to the authenticated user.
      * @path /users/{userId}
-     * @allow (create) Authenticated user creates their own profile.
-     * @allow (get) Authenticated user gets their profile.
-     * @allow (update) Authenticated user updates their profile.
-     * @allow (delete) Authenticated user deletes their profile.
-     * @deny (create) If the user ID in the path does not match the authenticated user's ID.
-     * @deny (update) If the user ID in the path does not match the authenticated user's ID.
-     * @deny (delete) If the user ID in the path does not match the authenticated user's ID.
+     * @allow (create) User with ID 'user123' can create their profile.
+     *   request.auth.uid: 'user123'
+     *   request.resource.data.id: 'user123'
+     * @deny (create) User with ID 'user123' cannot create a profile with ID 'user456'.
+     *   request.auth.uid: 'user123'
+     *   request.resource.data.id: 'user456'
      * @principle Enforces document ownership for writes.
      */
     match /users/{userId} {
       allow get: if isOwner(userId);
-      allow list: if false;
-      allow create: if isOwner(userId) && request.resource.data.id == request.auth.uid;
+      allow list: if false; // Prevent listing of all users.
+
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
       allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Rules for the /users/{userId}/documents/{documentId} collection.
+     * @description Grants access to documents only to the owner.
      * @path /users/{userId}/documents/{documentId}
-     * @allow (create) Authenticated user creates a document under their profile.
-     * @allow (get) Authenticated user gets a document under their profile.
-     * @allow (update) Authenticated user updates a document under their profile.
-     * @allow (delete) Authenticated user deletes a document under their profile.
-     * @deny (create) If the user ID in the path does not match the authenticated user's ID.
-     * @deny (update) If the user ID in the path does not match the authenticated user's ID.
-     * @deny (delete) If the user ID in the path does not match the authenticated user's ID.
+     * @allow (create) User with ID 'user123' can create a document.
+     *   request.auth.uid: 'user123'
+     *   request.resource.data.userId: 'user123'
+     * @deny (update) User with ID 'user123' cannot update a document owned by 'user456'.
+     *   request.auth.uid: 'user123'
+     *   resource.data.userId: 'user456'
      * @principle Enforces document ownership for writes.
      */
     match /users/{userId}/documents/{documentId} {
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
+
       allow create: if isOwner(userId) && request.resource.data.userId == userId;
       allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Rules for the /users/{userId}/documents/{documentId}/flashcards/{flashcardId} collection.
+     * @description Grants access to flashcards only to the owner.
      * @path /users/{userId}/documents/{documentId}/flashcards/{flashcardId}
-     * @allow (create) Authenticated user creates a flashcard under their document.
-     * @allow (get) Authenticated user gets a flashcard under their document.
-     * @allow (update) Authenticated user updates a flashcard under their document.
-     * @allow (delete) Authenticated user deletes a flashcard under their document.
-     * @deny (create) If the user ID in the path does not match the authenticated user's ID.
-     * @deny (update) If the user ID in the path does not match the authenticated user's ID.
-     * @deny (delete) If the user ID in the path does not match the authenticated user's ID.
+     * @allow (create) User with ID 'user123' can create a flashcard.
+     *   request.auth.uid: 'user123'
+     *   request.resource.data.documentId: 'doc123'
+     * @deny (update) User with ID 'user123' cannot update a flashcard owned by 'user456'.
+     *   request.auth.uid: 'user123'
+     *   resource.data.documentId: 'doc456'
      * @principle Enforces document ownership for writes.
      */
     match /users/{userId}/documents/{documentId}/flashcards/{flashcardId} {
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
+
       allow create: if isOwner(userId);
       allow update: if isExistingOwner(userId);
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Rules for the /users/{userId}/pyqAnswers/{pyqAnswerId} collection.
-     * @path /users/{userId}/pyqAnswers/{pyqAnswerId}
-     * @allow (create) Authenticated user creates a PYQAnswer under their profile.
-     * @allow (get) Authenticated user gets a PYQAnswer under their profile.
-     * @allow (update) Authenticated user updates a PYQAnswer under their profile.
-     * @allow (delete) Authenticated user deletes a PYQAnswer under their profile.
-     * @deny (create) If the user ID in the path does not match the authenticated user's ID.
-     * @deny (update) If the user ID in the path does not match the authenticated user's ID.
-     * @deny (delete) If the user ID in the path does not match the authenticated user's ID.
+     * @description Grants access to past year questions only to the owner.
+     * @path /users/{userId}/past_year_questions/{pastYearQuestionId}
+     * @allow (create) User with ID 'user123' can create a past year question.
+     *   request.auth.uid: 'user123'
+     *   request.resource.data.userId: 'user123'
+     * @deny (delete) User with ID 'user123' cannot delete a past year question owned by 'user456'.
+     *   request.auth.uid: 'user123'
+     *   resource.data.userId: 'user456'
      * @principle Enforces document ownership for writes.
      */
-    match /users/{userId}/pyqAnswers/{pyqAnswerId} {
+    match /users/{userId}/past_year_questions/{pastYearQuestionId} {
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
+
       allow create: if isOwner(userId) && request.resource.data.userId == userId;
       allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Rules for the /users/{userId}/timetables/{timetableId} collection.
+     * @description Grants access to timetables only to the owner.
      * @path /users/{userId}/timetables/{timetableId}
-     * @allow (create) Authenticated user creates a Timetable under their profile.
-     * @allow (get) Authenticated user gets a Timetable under their profile.
-     * @allow (update) Authenticated user updates a Timetable under their profile.
-     * @allow (delete) Authenticated user deletes a Timetable under their profile.
-     * @deny (create) If the user ID in the path does not match the authenticated user's ID.
-     * @deny (update) If the user ID in the path does not match the authenticated user's ID.
-     * @deny (delete) If the user ID in the path does not match the authenticated user's ID.
+     * @allow (create) User with ID 'user123' can create a timetable.
+     *   request.auth.uid: 'user123'
+     *   request.resource.data.userId: 'user123'
+     * @deny (update) User with ID 'user123' cannot update a timetable owned by 'user456'.
+     *   request.auth.uid: 'user123'
+     *   resource.data.userId: 'user456'
      * @principle Enforces document ownership for writes.
      */
     match /users/{userId}/timetables/{timetableId} {
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
+
       allow create: if isOwner(userId) && request.resource.data.userId == userId;
       allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Rules for the /users/{userId}/todoTasks/{todoTaskId} collection.
-     * @path /users/{userId}/todoTasks/{todoTaskId}
-     * @allow (create) Authenticated user creates a TodoTask under their profile.
-     * @allow (get) Authenticated user gets a TodoTask under their profile.
-     * @allow (update) Authenticated user updates a TodoTask under their profile.
-     * @allow (delete) Authenticated user deletes a TodoTask under their profile.
-     * @deny (create) If the user ID in the path does not match the authenticated user's ID.
-     * @deny (update) If the user ID in the path does not match the authenticated user's ID.
-     * @deny (delete) If the user ID in the path does not match the authenticated user's ID.
+     * @description Grants access to to-do tasks only to the owner.
+     * @path /users/{userId}/todo_tasks/{todoTaskId}
+     * @allow (create) User with ID 'user123' can create a to-do task.
+     *   request.auth.uid: 'user123'
+     *   request.resource.data.userId: 'user123'
+     * @deny (delete) User with ID 'user123' cannot delete a to-do task owned by 'user456'.
+     *   request.auth.uid: 'user123'
+     *   resource.data.userId: 'user456'
      * @principle Enforces document ownership for writes.
      */
-    match /users/{userId}/todoTasks/{todoTaskId} {
+    match /users/{userId}/todo_tasks/{todoTaskId} {
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
+
       allow create: if isOwner(userId) && request.resource.data.userId == userId;
       allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Rules for the /users/{userId}/gameScores/{gameScoreId} collection.
-     * @path /users/{userId}/gameScores/{gameScoreId}
-     * @allow (create) Authenticated user creates a GameScore under their profile.
-     * @allow (get) Authenticated user gets a GameScore under their profile.
-     * @allow (update) Authenticated user updates a GameScore under their profile.
-     * @allow (delete) Authenticated user deletes a GameScore under their profile.
-     * @deny (create) If the user ID in the path does not match the authenticated user's ID.
-     * @deny (update) If the user ID in the path does not match the authenticated user's ID.
-     * @deny (delete) If the user ID in the path does not match the authenticated user's ID.
+     * @description Grants access to voice notes only to the owner.
+     * @path /users/{userId}/voice_notes/{voiceNoteId}
+     * @allow (create) User with ID 'user123' can create a voice note.
+     *   request.auth.uid: 'user123'
+     *   request.resource.data.userId: 'user123'
+     * @deny (update) User with ID 'user123' cannot update a voice note owned by 'user456'.
+     *   request.auth.uid: 'user123'
+     *   resource.data.userId: 'user456'
      * @principle Enforces document ownership for writes.
      */
-    match /users/{userId}/gameScores/{gameScoreId} {
+    match /users/{userId}/voice_notes/{voiceNoteId} {
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
+
       allow create: if isOwner(userId) && request.resource.data.userId == userId;
       allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Rules for the /users/{userId}/studySessions/{sessionId} collection.
-     * @path /users/{userId}/studySessions/{sessionId}
-     * @allow (create) Authenticated user creates a StudySession under their profile.
-     * @allow (get) Authenticated user gets a StudySession under their profile.
-     * @allow (list) Authenticated user lists StudySessions under their profile.
-     * @allow (update) Authenticated user updates a StudySession under their profile.
-     * @allow (delete) Authenticated user deletes a StudySession under their profile.
-     * @deny (create) If the user ID in the path does not match the authenticated user's ID.
-     * @deny (update) If the user ID in the path does not match the authenticated user's ID.
-     * @deny (delete) If the user ID in the path does not match the authenticated user's ID.
+     * @description Grants access to game scores only to the owner.
+     * @path /users/{userId}/game_scores/{gameScoreId}
+     * @allow (create) User with ID 'user123' can create a game score.
+     *   request.auth.uid: 'user123'
+     *   request.resource.data.userId: 'user123'
+     * @deny (delete) User with ID 'user123' cannot delete a game score owned by 'user456'.
+     *   request.auth.uid: 'user123'
+     *   resource.data.userId: 'user456'
      * @principle Enforces document ownership for writes.
      */
-    match /users/{userId}/studySessions/{sessionId} {
+    match /users/{userId}/game_scores/{gameScoreId} {
       allow get: if isOwner(userId);
       allow list: if isOwner(userId);
+
       allow create: if isOwner(userId) && request.resource.data.userId == userId;
       allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
       allow delete: if isExistingOwner(userId);
