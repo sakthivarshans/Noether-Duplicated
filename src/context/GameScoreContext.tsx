@@ -28,7 +28,8 @@ export const GameScoreProvider = ({ children }: { children: ReactNode }) => {
   const firestore = useFirestore();
 
   const scoresQuery = useMemoFirebase(() => {
-    if (!user || !firestore) return null;
+    // CRITICAL FIX: Ensure user exists AND is not anonymous before creating a query.
+    if (!user || user.isAnonymous || !firestore) return null;
     return collection(firestore, `users/${user.uid}/gameScores`);
   }, [user, firestore]);
 
