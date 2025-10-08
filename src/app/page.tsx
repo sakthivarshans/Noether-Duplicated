@@ -9,7 +9,7 @@ import Link from 'next/link';
 import { useFirebase } from '@/firebase';
 import { useEffect, useState } from 'react';
 import { signInWithGoogle, signOut } from '@/firebase/auth';
-import { onAuthStateChanged } from 'firebase/auth';
+import { onAuthStateChanged, signInAnonymously } from 'firebase/auth';
 
 
 export default function LandingPage() {
@@ -39,12 +39,18 @@ export default function LandingPage() {
       try {
         const userCredential = await signInWithGoogle(auth);
         if (!userCredential) {
-           setIsLoading(false); // If sign-in fails, stop loading
+           // If sign-in fails, fall back to anonymous
+           await signInAnonymously(auth);
         }
         // The onAuthStateChanged listener will handle the redirect.
       } catch (error) {
-        console.error("Sign-in failed:", error);
-        setIsLoading(false);
+        console.error("Sign-in failed, falling back to anonymous:", error);
+        try {
+          await signInAnonymously(auth);
+        } catch (anonError) {
+          console.error("Anonymous sign-in also failed:", anonError);
+          setIsLoading(false);
+        }
       }
     }
   };
@@ -116,5 +122,3 @@ export default function LandingPage() {
     </div>
   );
 }
-
-    
