@@ -1,286 +1,233 @@
 /**
- * @file Firestore Security Rules
- * @version 2
+ * @fileoverview Firestore Security Rules for the application.
  *
- * @corePhilosophy
- * This ruleset enforces a strict user-ownership model for all data. Each user can only access their own profile and associated data (documents, flashcards, PYQ answers, timetables, todo tasks, and game scores).
+ * Core Philosophy:
+ * This ruleset enforces a strict user-ownership model.  All data is nested under
+ * /users/{userId}, and users can only read and write their own data. The user ID
+ * from Firebase Authentication (request.auth.uid) must match the {userId} path
+ * segment in all requests.
  *
- * @dataStructure
- * Data is nested under the `/users/{userId}` collection, with subcollections for related entities like documents, flashcards, and game scores. This structure ensures data isolation between users.
+ * Data Structure:
+ * - /users/{userId}: Stores user profile information. The {userId} must match the
+ *   authenticated user's UID.
+ * - /users/{userId}/documents/{documentId}: Stores documents uploaded by the user.
+ * - /users/{userId}/documents/{documentId}/flashcards/{flashcardId}: Stores flashcards
+ *   generated from a specific document.
+ * - /users/{userId}/pyqAnswers/{pyqAnswerId}: Stores answers to past year questions.
+ * - /users/{userId}/timetables/{timetableId}: Stores study timetables.
+ * - /users/{userId}/todoTasks/{todoTaskId}: Stores to-do list tasks.
+ * - /users/{userId}/gameScores/{gameScoreId}: Stores game scores.
  *
- * @keySecurityDecisions
- * - User listing is disallowed to prevent unauthorized access to user profiles.
- * - All write operations require authentication (user must be signed in).
- * - All data is owned by a specific user, enforced through the `userId` field in each document.
- * - Authorization is performed by checking if the `request.auth.uid` matches the `userId` in the document or the `userId` in the path.
- *
- * @denormalizationForAuthorization
- * To improve rule efficiency and prevent extra reads, authorization relies on the `userId` field within documents.
- * This denormalization strategy avoids the need to perform expensive `get()` operations to verify ownership.
- *
- * @structuralSegregation
- * Private data is stored under the `/users/{userId}` path, ensuring that only the authenticated user can access it. There are no public collections in this data model.
+ * Key Security Decisions:
+ * - User listing is disallowed. Only the authenticated user can access their
+ *   own data.
+ * - The ruleset prioritizes security and restricts access to only the currently
+ *   logged-in user.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Allows users to read and write their own profile data.
+     * @description Enforces access control for user profiles. Users can only read and write their own profile data.
      * @path /users/{userId}
-     * @allow (get) Signed-in user can read their own profile.
-     * @allow (create) Signed-in user can create their own profile if the userId matches their auth UID.
-     * @allow (update) Signed-in user can update their own profile if the userId matches their auth UID.
-     * @allow (delete) Signed-in user can delete their own profile if the userId matches their auth UID.
-     * @deny (get) Signed-in user cannot read another user's profile.
-     * @deny (create) Signed-in user cannot create a profile with a different userId.
-     * @deny (update) Signed-in user cannot update another user's profile.
-     * @deny (delete) Signed-in user cannot delete another user's profile.
-     * @principle Enforces document ownership for all operations on user profiles.
+     * @allow (create) User with UID 'user123' creates a profile with id 'user123'.
+     * @allow (get) User with UID 'user123' reads their own profile data.
+     * @allow (update) User with UID 'user123' updates their own profile data.
+     * @allow (delete) User with UID 'user123' deletes their own profile data.
+     * @deny (create) User with UID 'user456' attempts to create a profile with id 'user123'.
+     * @deny (get) User with UID 'user456' attempts to read profile data for user 'user123'.
+     * @deny (update) User with UID 'user456' attempts to update profile data for user 'user123'.
+     * @deny (delete) User with UID 'user456' attempts to delete profile data for user 'user123'.
+     * @principle Enforces document ownership for all operations.
      */
     match /users/{userId} {
-      // Helper function to check if the user is signed in
-      function isSignedIn() {
-        return request.auth != null;
-      }
-
-      // Helper function to check if the user is the owner of the profile
       function isOwner(userId) {
-        return request.auth.uid == userId;
+        return request.auth != null && request.auth.uid == userId;
       }
 
-      // Helper function to check if the user is the existing owner of the profile
       function isExistingOwner(userId) {
         return isOwner(userId) && resource != null;
       }
 
-      allow get: if isSignedIn() && isOwner(userId);
-      allow list: if false; // User listing is not allowed
-
-      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.id == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id; // Enforce immutability of userId
+      allow get: if isOwner(userId);
+      allow list: if false;
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Allows users to manage their uploaded documents.
+     * @description Enforces access control for documents uploaded by users. Users can only read and write their own documents.
      * @path /users/{userId}/documents/{documentId}
-     * @allow (get) Signed-in user can read their own documents.
-     * @allow (create) Signed-in user can create documents under their own profile.
-     * @allow (update) Signed-in user can update their own documents.
-     * @allow (delete) Signed-in user can delete their own documents.
-     * @deny (get) Signed-in user cannot read another user's documents.
-     * @deny (create) Signed-in user cannot create documents under another user's profile.
-     * @deny (update) Signed-in user cannot update another user's documents.
-     * @deny (delete) Signed-in user cannot delete another user's documents.
-     * @principle Enforces document ownership for all operations on user documents.
+     * @allow (create) User with UID 'user123' creates a document under their user ID.
+     * @allow (get) User with UID 'user123' reads a document under their user ID.
+     * @allow (update) User with UID 'user123' updates a document under their user ID.
+     * @allow (delete) User with UID 'user123' deletes a document under their user ID.
+     * @deny (create) User with UID 'user456' attempts to create a document under user 'user123'.
+     * @deny (get) User with UID 'user456' attempts to read a document under user 'user123'.
+     * @deny (update) User with UID 'user456' attempts to update a document under user 'user123'.
+     * @deny (delete) User with UID 'user456' attempts to delete a document under user 'user123'.
+     * @principle Enforces document ownership for all operations.
      */
     match /users/{userId}/documents/{documentId} {
-      // Helper function to check if the user is signed in
-      function isSignedIn() {
-        return request.auth != null;
-      }
-
-      // Helper function to check if the user is the owner of the document
       function isOwner(userId) {
-        return request.auth.uid == userId;
+        return request.auth != null && request.auth.uid == userId;
       }
 
-       // Helper function to check if the user is the existing owner of the document
       function isExistingOwner(userId) {
         return isOwner(userId) && resource != null;
       }
 
-      allow get: if isSignedIn() && isOwner(userId);
-      allow list: if isSignedIn() && isOwner(userId);
-
-      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.userId == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId; // Enforce immutability of userId
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Allows users to manage flashcards associated with their documents.
+     * @description Enforces access control for flashcards generated from documents. Users can only read and write their own flashcards.
      * @path /users/{userId}/documents/{documentId}/flashcards/{flashcardId}
-     * @allow (get) Signed-in user can read flashcards for their own documents.
-     * @allow (create) Signed-in user can create flashcards under their own documents.
-     * @allow (update) Signed-in user can update flashcards for their own documents.
-     * @allow (delete) Signed-in user can delete flashcards for their own documents.
-     * @deny (get) Signed-in user cannot read flashcards for another user's documents.
-     * @deny (create) Signed-in user cannot create flashcards under another user's documents.
-     * @deny (update) Signed-in user cannot update flashcards for another user's documents.
-     * @deny (delete) Signed-in user cannot delete flashcards for another user's documents.
-     * @principle Enforces document ownership for all operations on flashcards.
+     * @allow (create) User with UID 'user123' creates a flashcard under their document.
+     * @allow (get) User with UID 'user123' reads a flashcard under their document.
+     * @allow (update) User with UID 'user123' updates a flashcard under their document.
+     * @allow (delete) User with UID 'user123' deletes a flashcard under their document.
+     * @deny (create) User with UID 'user456' attempts to create a flashcard under user 'user123''s document.
+     * @deny (get) User with UID 'user456' attempts to read a flashcard under user 'user123''s document.
+     * @deny (update) User with UID 'user456' attempts to update a flashcard under user 'user123''s document.
+     * @deny (delete) User with UID 'user456' attempts to delete a flashcard under user 'user123''s document.
+     * @principle Enforces document ownership for all operations.
      */
     match /users/{userId}/documents/{documentId}/flashcards/{flashcardId} {
-      // Helper function to check if the user is signed in
-      function isSignedIn() {
-        return request.auth != null;
-      }
-
-      // Helper function to check if the user is the owner of the flashcard (via the document)
       function isOwner(userId) {
-        return request.auth.uid == userId;
+        return request.auth != null && request.auth.uid == userId;
       }
 
-      // Helper function to check if the user is the existing owner of the flashcard (via the document)
       function isExistingOwner(userId) {
         return isOwner(userId) && resource != null;
       }
 
-      allow get: if isSignedIn() && isOwner(userId);
-      allow list: if isSignedIn() && isOwner(userId);
-
-      allow create: if isSignedIn() && isOwner(userId);
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId);
       allow update: if isExistingOwner(userId);
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Allows users to manage their PYQ answers.
+     * @description Enforces access control for PYQ answers. Users can only read and write their own answers.
      * @path /users/{userId}/pyqAnswers/{pyqAnswerId}
-     * @allow (get) Signed-in user can read their own PYQ answers.
-     * @allow (create) Signed-in user can create PYQ answers under their own profile.
-     * @allow (update) Signed-in user can update their own PYQ answers.
-     * @allow (delete) Signed-in user can delete their own PYQ answers.
-     * @deny (get) Signed-in user cannot read another user's PYQ answers.
-     * @deny (create) Signed-in user cannot create PYQ answers under another user's profile.
-     * @deny (update) Signed-in user cannot update another user's PYQ answers.
-     * @deny (delete) Signed-in user cannot delete another user's PYQ answers.
-     * @principle Enforces document ownership for all operations on PYQ answers.
+     * @allow (create) User with UID 'user123' creates a PYQ answer under their user ID.
+     * @allow (get) User with UID 'user123' reads a PYQ answer under their user ID.
+     * @allow (update) User with UID 'user123' updates a PYQ answer under their user ID.
+     * @allow (delete) User with UID 'user123' deletes a PYQ answer under their user ID.
+     * @deny (create) User with UID 'user456' attempts to create a PYQ answer under user 'user123'.
+     * @deny (get) User with UID 'user456' attempts to read a PYQ answer under user 'user123'.
+     * @deny (update) User with UID 'user456' attempts to update a PYQ answer under user 'user123'.
+     * @deny (delete) User with UID 'user456' attempts to delete a PYQ answer under user 'user123'.
+     * @principle Enforces document ownership for all operations.
      */
     match /users/{userId}/pyqAnswers/{pyqAnswerId} {
-      // Helper function to check if the user is signed in
-      function isSignedIn() {
-        return request.auth != null;
-      }
-
-      // Helper function to check if the user is the owner of the PYQ answer
       function isOwner(userId) {
-        return request.auth.uid == userId;
+        return request.auth != null && request.auth.uid == userId;
       }
 
-       // Helper function to check if the user is the existing owner of the PYQ answer
       function isExistingOwner(userId) {
         return isOwner(userId) && resource != null;
       }
 
-      allow get: if isSignedIn() && isOwner(userId);
-      allow list: if isSignedIn() && isOwner(userId);
-
-      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.userId == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId; // Enforce immutability of userId
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Allows users to manage their timetables.
+     * @description Enforces access control for timetables. Users can only read and write their own timetables.
      * @path /users/{userId}/timetables/{timetableId}
-     * @allow (get) Signed-in user can read their own timetables.
-     * @allow (create) Signed-in user can create timetables under their own profile.
-     * @allow (update) Signed-in user can update their own timetables.
-     * @allow (delete) Signed-in user can delete their own timetables.
-     * @deny (get) Signed-in user cannot read another user's timetables.
-     * @deny (create) Signed-in user cannot create timetables under another user's profile.
-     * @deny (update) Signed-in user cannot update another user's timetables.
-     * @deny (delete) Signed-in user cannot delete another user's timetables.
-     * @principle Enforces document ownership for all operations on timetables.
+     * @allow (create) User with UID 'user123' creates a timetable under their user ID.
+     * @allow (get) User with UID 'user123' reads a timetable under their user ID.
+     * @allow (update) User with UID 'user123' updates a timetable under their user ID.
+     * @allow (delete) User with UID 'user123' deletes a timetable under their user ID.
+     * @deny (create) User with UID 'user456' attempts to create a timetable under user 'user123'.
+     * @deny (get) User with UID 'user456' attempts to read a timetable under user 'user123'.
+     * @deny (update) User with UID 'user456' attempts to update a timetable under user 'user123'.
+     * @deny (delete) User with UID 'user456' attempts to delete a timetable under user 'user123'.
+     * @principle Enforces document ownership for all operations.
      */
     match /users/{userId}/timetables/{timetableId} {
-      // Helper function to check if the user is signed in
-      function isSignedIn() {
-        return request.auth != null;
-      }
-
-      // Helper function to check if the user is the owner of the timetable
       function isOwner(userId) {
-        return request.auth.uid == userId;
+        return request.auth != null && request.auth.uid == userId;
       }
 
-       // Helper function to check if the user is the existing owner of the timetable
       function isExistingOwner(userId) {
         return isOwner(userId) && resource != null;
       }
 
-      allow get: if isSignedIn() && isOwner(userId);
-      allow list: if isSignedIn() && isOwner(userId);
-
-      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.userId == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId; // Enforce immutability of userId
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Allows users to manage their to-do tasks.
+     * @description Enforces access control for todo tasks. Users can only read and write their own tasks.
      * @path /users/{userId}/todoTasks/{todoTaskId}
-     * @allow (get) Signed-in user can read their own to-do tasks.
-     * @allow (create) Signed-in user can create to-do tasks under their own profile.
-     * @allow (update) Signed-in user can update their own to-do tasks.
-     * @allow (delete) Signed-in user can delete their own to-do tasks.
-     * @deny (get) Signed-in user cannot read another user's to-do tasks.
-     * @deny (create) Signed-in user cannot create to-do tasks under another user's profile.
-     * @deny (update) Signed-in user cannot update another user's to-do tasks.
-     * @deny (delete) Signed-in user cannot delete another user's to-do tasks.
-     * @principle Enforces document ownership for all operations on to-do tasks.
+     * @allow (create) User with UID 'user123' creates a todo task under their user ID.
+     * @allow (get) User with UID 'user123' reads a todo task under their user ID.
+     * @allow (update) User with UID 'user123' updates a todo task under their user ID.
+     * @allow (delete) User with UID 'user123' deletes a todo task under their user ID.
+     * @deny (create) User with UID 'user456' attempts to create a todo task under user 'user123'.
+     * @deny (get) User with UID 'user456' attempts to read a todo task under user 'user123'.
+     * @deny (update) User with UID 'user456' attempts to update a todo task under user 'user123'.
+     * @deny (delete) User with UID 'user456' attempts to delete a todo task under user 'user123'.
+     * @principle Enforces document ownership for all operations.
      */
     match /users/{userId}/todoTasks/{todoTaskId} {
-      // Helper function to check if the user is signed in
-      function isSignedIn() {
-        return request.auth != null;
-      }
-
-      // Helper function to check if the user is the owner of the to-do task
       function isOwner(userId) {
-        return request.auth.uid == userId;
+        return request.auth != null && request.auth.uid == userId;
       }
 
-       // Helper function to check if the user is the existing owner of the to-do task
       function isExistingOwner(userId) {
         return isOwner(userId) && resource != null;
       }
 
-      allow get: if isSignedIn() && isOwner(userId);
-      allow list: if isSignedIn() && isOwner(userId);
-
-      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.userId == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId; // Enforce immutability of userId
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Allows users to manage their game scores.
+     * @description Enforces access control for game scores. Users can only read and write their own game scores.
      * @path /users/{userId}/gameScores/{gameScoreId}
-     * @allow (get) Signed-in user can read their own game scores.
-     * @allow (create) Signed-in user can create game scores under their own profile.
-     * @allow (update) Signed-in user can update their own game scores.
-     * @allow (delete) Signed-in user can delete their own game scores.
-     * @deny (get) Signed-in user cannot read another user's game scores.
-     * @deny (create) Signed-in user cannot create game scores under another user's profile.
-     * @deny (update) Signed-in user cannot update another user's game scores.
-     * @deny (delete) Signed-in user cannot delete another user's game scores.
-     * @principle Enforces document ownership for all operations on game scores.
+     * @allow (create) User with UID 'user123' creates a game score under their user ID.
+     * @allow (get) User with UID 'user123' reads a game score under their user ID.
+     * @allow (update) User with UID 'user123' updates a game score under their user ID.
+     * @allow (delete) User with UID 'user123' deletes a game score under their user ID.
+     * @deny (create) User with UID 'user456' attempts to create a game score under user 'user123'.
+     * @deny (get) User with UID 'user456' attempts to read a game score under user 'user123'.
+     * @deny (update) User with UID 'user456' attempts to update a game score under user 'user123'.
+     * @deny (delete) User with UID 'user456' attempts to delete a game score under user 'user123'.
+     * @principle Enforces document ownership for all operations.
      */
     match /users/{userId}/gameScores/{gameScoreId} {
-      // Helper function to check if the user is signed in
-      function isSignedIn() {
-        return request.auth != null;
-      }
-
-      // Helper function to check if the user is the owner of the game score
       function isOwner(userId) {
-        return request.auth.uid == userId;
+        return request.auth != null && request.auth.uid == userId;
       }
 
-       // Helper function to check if the user is the existing owner of the game score
       function isExistingOwner(userId) {
         return isOwner(userId) && resource != null;
       }
 
-      allow get: if isSignedIn() && isOwner(userId);
-      allow list: if isSignedIn() && isOwner(userId);
-
-      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.userId == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId; // Enforce immutability of userId
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
       allow delete: if isExistingOwner(userId);
     }
   }
