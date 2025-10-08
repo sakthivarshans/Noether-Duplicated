@@ -17,6 +17,7 @@ import {
   User,
   Bed,
   Waypoints,
+  BarChart3,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Mascot from '@/components/mascot';
@@ -27,6 +28,7 @@ const navItems = [
   { href: '/dashboard/pyq', label: 'PYQ', icon: FileQuestion },
   { href: '/dashboard/search', label: 'Smart Citation', icon: Search },
   { href: '/dashboard/roadmap', label: 'Roadmap', icon: Waypoints },
+  { href: '/dashboard/insights', label: 'Insights', icon: BarChart3 },
 ];
 
 const toolsItems = [

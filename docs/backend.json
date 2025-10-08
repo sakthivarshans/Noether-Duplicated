@@ -288,6 +288,43 @@
         "score",
         "playedDate"
       ]
+    },
+    "StudySession": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "StudySession",
+      "type": "object",
+      "description": "Represents a completed study session (e.g., a Pomodoro).",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the StudySession entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to UserProfile."
+        },
+        "startTime": {
+          "type": "string",
+          "description": "Start time of the session.",
+          "format": "date-time"
+        },
+        "endTime": {
+          "type": "string",
+          "description": "End time of the session.",
+          "format": "date-time"
+        },
+        "duration": {
+          "type": "number",
+          "description": "Duration of the session in minutes."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "startTime",
+        "endTime",
+        "duration"
+      ]
     }
   },
   "auth": {
@@ -337,6 +374,12 @@
         "$ref": "#/entities/GameScore"
       },
       "description": "Stores the user's scores in brain games."
+    },
+    "/users/{userId}/studySessions/{sessionId}": {
+      "schema": {
+        "$ref": "#/entities/StudySession"
+      },
+      "description": "Stores completed study sessions for a user."
     }
   }
 }

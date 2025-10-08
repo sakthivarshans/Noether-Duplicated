@@ -3,6 +3,7 @@ import Link from 'next/link';
 import {
   Menu,
   Award,
+  BarChart3,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -24,6 +25,7 @@ const navItems = [
     { href: '/dashboard/flashcards', label: 'Flashcards' },
     { href: '/dashboard/games', label: 'Games' },
     { href: '/dashboard/music', label: 'Music' },
+    { href: '/dashboard/insights', label: 'Insights', icon: BarChart3 },
   ];
 
 export function Header() {

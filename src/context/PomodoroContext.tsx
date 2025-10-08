@@ -1,5 +1,8 @@
 'use client';
-import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
+import React, { createContext, useState, useContext, ReactNode, useEffect, useCallback } from 'react';
+import { useUser, useFirestore } from '@/firebase';
+import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { collection } from 'firebase/firestore';
 
 const WORK_MINUTES = 25;
 const BREAK_MINUTES = 5;
@@ -20,6 +23,24 @@ export const PomodoroProvider = ({ children }: { children: ReactNode }) => {
   const [seconds, setSeconds] = useState(0);
   const [isActive, setIsActive] = useState(false);
   const [isBreak, setIsBreak] = useState(false);
+  const [sessionStartTime, setSessionStartTime] = useState<Date | null>(null);
+
+  const { user } = useUser();
+  const firestore = useFirestore();
+
+  const logStudySession = useCallback(() => {
+    if (!user || !firestore || !sessionStartTime) return;
+    
+    const sessionsCollectionPath = `users/${user.uid}/studySessions`;
+    const collectionRef = collection(firestore, sessionsCollectionPath);
+
+    addDocumentNonBlocking(collectionRef, {
+      userId: user.uid,
+      startTime: sessionStartTime.toISOString(),
+      endTime: new Date().toISOString(),
+      duration: WORK_MINUTES,
+    });
+  }, [user, firestore, sessionStartTime]);
 
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
@@ -28,10 +49,11 @@ export const PomodoroProvider = ({ children }: { children: ReactNode }) => {
         if (seconds === 0) {
           if (minutes === 0) {
             // Timer ended
-            if (isBreak) {
+            if (isBreak) { // Break ended, start new work session
               setMinutes(WORK_MINUTES);
               setIsBreak(false);
-            } else {
+            } else { // Work session ended, log it and start break
+              logStudySession();
               setMinutes(BREAK_MINUTES);
               setIsBreak(true);
             }
@@ -52,9 +74,12 @@ export const PomodoroProvider = ({ children }: { children: ReactNode }) => {
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [isActive, seconds, minutes, isBreak]);
+  }, [isActive, seconds, minutes, isBreak, logStudySession]);
 
   const toggle = () => {
+    if (!isActive && minutes === WORK_MINUTES && seconds === 0 && !isBreak) {
+      setSessionStartTime(new Date());
+    }
     setIsActive(!isActive);
   };
 
@@ -63,6 +88,7 @@ export const PomodoroProvider = ({ children }: { children: ReactNode }) => {
     setIsBreak(false);
     setMinutes(WORK_MINUTES);
     setSeconds(0);
+    setSessionStartTime(null);
   };
 
   return (
