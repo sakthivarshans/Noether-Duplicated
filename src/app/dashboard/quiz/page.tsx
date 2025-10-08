@@ -27,6 +27,7 @@ export default function QuizPage() {
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [explanations, setExplanations] = useState<Explanation[]>([]);
   const [score, setScore] = useState(0);
+  const [questionCount, setQuestionCount] = useState(10);
 
   const { toast } = useToast();
 
@@ -60,7 +61,7 @@ export default function QuizPage() {
     if (!fileDataUri) return;
     setGameState('generating_quiz');
     try {
-      const response = await generateQuizFromDocument({ documentDataUri: fileDataUri });
+      const response = await generateQuizFromDocument({ documentDataUri: fileDataUri, questionCount });
       if (response.questions.length === 0) {
         toast({ variant: "destructive", title: "Could not generate quiz", description: "The document may not have enough content." });
         setGameState('upload');
@@ -132,14 +133,30 @@ export default function QuizPage() {
               <CardDescription>Upload a document (.pdf, .pptx) to generate a quiz from its content.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <label htmlFor="file-upload" className="flex items-center justify-center w-full h-32 px-4 transition bg-background border-2 border-dashed rounded-md appearance-none cursor-pointer hover:border-primary">
-                <span className="flex items-center space-x-2">
-                  <Upload className="w-6 h-6 text-muted-foreground" />
-                  <span className="font-medium text-muted-foreground">{fileName || "Drag & drop a file or click to upload"}</span>
-                </span>
-                <Input id="file-upload" type="file" className="hidden" onChange={handleFileChange} accept=".pdf,.pptx" />
-              </label>
-              {uploadProgress !== null && <Progress value={uploadProgress} className="w-full" />}
+              <div>
+                <Label htmlFor="file-upload" className="flex items-center justify-center w-full h-32 px-4 transition bg-background border-2 border-dashed rounded-md appearance-none cursor-pointer hover:border-primary">
+                  <span className="flex items-center space-x-2">
+                    <Upload className="w-6 h-6 text-muted-foreground" />
+                    <span className="font-medium text-muted-foreground">{fileName || "Drag & drop a file or click to upload"}</span>
+                  </span>
+                  <Input id="file-upload" type="file" className="hidden" onChange={handleFileChange} accept=".pdf,.pptx" />
+                </Label>
+                {uploadProgress !== null && <Progress value={uploadProgress} className="w-full mt-2" />}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="question-count">Number of Questions (1-50)</Label>
+                <Input
+                  id="question-count"
+                  type="number"
+                  value={questionCount}
+                  onChange={(e) => setQuestionCount(Math.max(1, Math.min(50, Number(e.target.value))))}
+                  min="1"
+                  max="50"
+                  className="w-full"
+                />
+              </div>
+
               <Button onClick={handleGenerateQuiz} disabled={!fileName || uploadProgress !== null || gameState === 'generating_quiz'} className="w-full">
                 {gameState === 'generating_quiz' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Zap className="mr-2 h-4 w-4" />}
                 {gameState === 'generating_quiz' ? 'Generating Quiz...' : 'Start Quiz'}

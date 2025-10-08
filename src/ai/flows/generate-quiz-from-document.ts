@@ -16,6 +16,7 @@ const GenerateQuizFromDocumentInputSchema = z.object({
     .describe(
       "A document (PDF or PPTX), as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
     ),
+  questionCount: z.number().min(1).max(50).describe('The number of questions to generate.'),
 });
 export type GenerateQuizFromDocumentInput = z.infer<typeof GenerateQuizFromDocumentInputSchema>;
 
@@ -28,8 +29,7 @@ const QuizQuestionSchema = z.object({
 const GenerateQuizFromDocumentOutputSchema = z.object({
   questions: z
     .array(QuizQuestionSchema)
-    .max(20)
-    .describe('An array of up to 20 multiple-choice questions generated from the document.'),
+    .describe('An array of multiple-choice questions generated from the document.'),
 });
 export type GenerateQuizFromDocumentOutput = z.infer<typeof GenerateQuizFromDocumentOutputSchema>;
 export type QuizQuestion = z.infer<typeof QuizQuestionSchema>;
@@ -45,7 +45,7 @@ const prompt = ai.definePrompt({
   output: { schema: GenerateQuizFromDocumentOutputSchema },
   prompt: `You are an expert quiz creator for students. Your task is to analyze the provided document and generate a multiple-choice quiz to test a user's understanding of the material.
 
-Generate up to 20 questions. Each question must have exactly 4 options. One of these options must be the correct answer.
+Generate exactly {{questionCount}} questions. Each question must have exactly 4 options. One of these options must be the correct answer.
 
 Ensure the questions cover the key concepts and important details from the document. The options should be plausible but distinct.
 
