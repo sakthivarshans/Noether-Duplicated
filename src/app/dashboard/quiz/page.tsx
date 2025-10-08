@@ -12,6 +12,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useGameScores } from '@/context/GameScoreContext';
 
 type GameState = 'upload' | 'generating_quiz' | 'in_progress' | 'grading' | 'results';
 
@@ -30,6 +31,7 @@ export default function QuizPage() {
   const [questionCount, setQuestionCount] = useState(10);
 
   const { toast } = useToast();
+  const { addScore } = useGameScores();
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -97,6 +99,7 @@ export default function QuizPage() {
       }));
       const correctCount = resultsToGrade.filter(r => r.userAnswerIndex === r.correctAnswerIndex).length;
       setScore(correctCount);
+      addScore('quiz', correctCount); // Add score to game context
 
       try {
         const gradeResponse = await gradeQuiz({ results: resultsToGrade });
@@ -216,6 +219,7 @@ export default function QuizPage() {
                             <Award className="w-8 h-8 text-primary"/>
                             <span>Your Score: {score} / {questions.length}</span>
                         </div>
+                        <p className="text-green-500 font-semibold">You earned {score} points!</p>
                     </CardHeader>
                     <CardContent>
                        <p className="text-muted-foreground">Below are the detailed explanations for each question.</p>

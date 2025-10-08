@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { games } from '@/lib/data';
-import { ArrowRight, Award, Brain, Atom, Dna, FlaskConical, Microscope, Rocket, TestTube, Lightbulb, Zap } from 'lucide-react';
+import { ArrowRight, Award, Brain, Atom, Dna, FlaskConical, Microscope, Rocket, TestTube, Lightbulb, Zap, BrainCircuit } from 'lucide-react';
 import Link from 'next/link';
 import { useGameScores } from '@/context/GameScoreContext';
 
@@ -10,6 +10,7 @@ const gameIcons: { [key: string]: React.ElementType } = {
   sudoku: Brain,
   memory: Dna,
   reaction: Zap,
+  quiz: BrainCircuit,
 };
 
 export default function GamesPage() {
@@ -19,8 +20,8 @@ export default function GamesPage() {
     <div>
       <div className="mb-6 flex justify-between items-center">
         <div>
-            <h1 className="font-headline text-3xl font-bold">Brain Games</h1>
-            <p className="text-muted-foreground">Take a break and sharpen your mind with these fun games.</p>
+            <h1 className="font-headline text-3xl font-bold">Brain Games & Quizzes</h1>
+            <p className="text-muted-foreground">Take a break, sharpen your mind, or test your knowledge.</p>
         </div>
         <Card className="p-3">
             <div className="flex items-center gap-2">
@@ -34,8 +35,9 @@ export default function GamesPage() {
         {games.map(game => {
           const Icon = gameIcons[game.id] || Brain;
           const highScore = getHighScore(game.id);
+          const href = game.id === 'quiz' ? '/dashboard/quiz' : `/dashboard/games/${game.id}`;
           return (
-            <Link href={`/dashboard/games/${game.id}`} key={game.id}>
+            <Link href={href} key={game.id}>
               <Card className="group h-full flex flex-col justify-between hover:bg-accent hover:border-primary/50 transition-all transform hover:-translate-y-1">
                 <div>
                   <CardHeader className="flex flex-row items-center gap-4">
