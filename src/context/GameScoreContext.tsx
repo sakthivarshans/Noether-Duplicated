@@ -71,9 +71,9 @@ export const GameScoreProvider = ({ children }: { children: ReactNode }) => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }), [weeklyScores, totalScore, areScoresLoading]);
 
-  // Do not render children until the initial loading is complete and we have a user.
+  // Do not render children until the initial loading is complete.
   // This prevents downstream components from accessing context values before they are ready.
-  if (areScoresLoading && !allScores) {
+  if (areScoresLoading && allScores === null) {
     return null;
   }
 
