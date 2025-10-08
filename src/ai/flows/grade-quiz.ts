@@ -40,7 +40,7 @@ export async function gradeQuiz(input: GradeQuizInput): Promise<GradeQuizOutput>
 
 const prompt = ai.definePrompt({
   name: 'gradeQuizPrompt',
-  input: { schema: GradeQuizInputSchema },
+  input: { schema: z.object({ resultsAsJson: z.string() }) },
   output: { schema: GradeQuizOutputSchema },
   prompt: `You are an expert tutor. A student has just completed a quiz. Your task is to provide detailed feedback for each question.
 
@@ -49,7 +49,7 @@ For each question in the provided results, do the following:
 2.  If the student's answer was incorrect, also provide a specific explanation ("wrongAnswerExplanation") detailing the misunderstanding that likely led to their choice. If their answer was correct, do not provide this field.
 
 Here are the student's results:
-{{{jsonStringify results}}}
+{{{resultsAsJson}}}
 `,
 });
 
@@ -59,8 +59,8 @@ const gradeQuizFlow = ai.defineFlow(
     inputSchema: GradeQuizInputSchema,
     outputSchema: GradeQuizOutputSchema,
   },
-  async input => {
-    const { output } = await prompt(input);
+  async (input) => {
+    const { output } = await prompt({ resultsAsJson: JSON.stringify(input.results, null, 2) });
     return output!;
   }
 );
