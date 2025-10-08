@@ -1,11 +1,10 @@
 'use client';
 
 import React, { createContext, useState, useContext, ReactNode, useEffect, useMemo } from 'react';
-import { useUser } from '@/firebase';
+import { useUser, useFirestore, useMemoFirebase } from '@/firebase';
 import { useCollection } from '@/firebase/firestore/use-collection';
 import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { collection } from 'firebase/firestore';
-import { useFirestore, useMemoFirebase } from '@/firebase/provider';
 import { isThisWeek } from 'date-fns';
 
 export interface GameScore {
@@ -38,7 +37,7 @@ export const GameScoreProvider = ({ children }: { children: ReactNode }) => {
     return collection(firestore, scoresCollectionPath);
   }, [scoresCollectionPath, firestore]);
 
-  const { data: allScores } = useCollection<GameScore>(scoresQuery);
+  const { data: allScores, isLoading: areScoresLoading } = useCollection<GameScore>(scoresQuery);
 
   const weeklyScores = useMemo(() => {
     if (!allScores) return [];
@@ -73,7 +72,7 @@ export const GameScoreProvider = ({ children }: { children: ReactNode }) => {
     getHighScore,
     addScore,
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), [weeklyScores, totalScore]);
+  }), [weeklyScores, totalScore, areScoresLoading]);
 
 
   return (
