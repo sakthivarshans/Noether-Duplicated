@@ -36,6 +36,8 @@ export const musicTracks = [
     { id: 6, title: "Ocean Waves", artist: "Nature Sounds", duration: "4:30", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3" },
     { id: 7, title: "Forest Stream", artist: "Nature Sounds", duration: "4:15", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-7.mp3" },
     { id: 8, title: "Piano Dreams", artist: "Classical", duration: "2:55", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3" },
+    { id: 9, title: "Ambient Flow", artist: "Electronic", duration: "3:50", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-9.mp3"},
+    { id: 10, title: "Cosmic Drift", artist: "Ambient", duration: "5:20", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-10.mp3"}
 ];
 
 export const games = [
