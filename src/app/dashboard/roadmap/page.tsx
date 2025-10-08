@@ -3,11 +3,12 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Waypoints, Loader2, ListOrdered, CheckCircle } from 'lucide-react';
+import { Waypoints, Loader2, ListOrdered, CheckCircle, Book, Link as LinkIcon } from 'lucide-react';
 import { generateLearningRoadmap, GenerateLearningRoadmapOutput } from '@/ai/flows/generate-learning-roadmap';
 import { useToast } from '@/hooks/use-toast';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Skeleton } from '@/components/ui/skeleton';
+import Link from 'next/link';
 
 export default function RoadmapPage() {
   const [topic, setTopic] = useState('Quantum Computing');
@@ -81,6 +82,7 @@ export default function RoadmapPage() {
       {isGenerating && <RoadmapSkeleton />}
 
       {result && (
+        <>
         <Card>
           <CardHeader>
             <CardTitle>Your Learning Roadmap for &ldquo;{topic}&rdquo;</CardTitle>
@@ -122,6 +124,33 @@ export default function RoadmapPage() {
             </Accordion>
           </CardContent>
         </Card>
+        
+        {result.referenceBooks && result.referenceBooks.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2"><Book className="w-5 h-5"/> Recommended Reading</CardTitle>
+              <CardDescription>Supplement your learning with these highly-rated books.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-4">
+                {result.referenceBooks.map((book, index) => (
+                  <li key={index}>
+                    <Link href={book.url} target="_blank" rel="noopener noreferrer" className="group flex items-center gap-4 p-4 rounded-lg bg-secondary/50 hover:bg-secondary transition-colors">
+                      <div className="p-3 bg-background rounded-md">
+                        <LinkIcon className="h-5 w-5 text-muted-foreground group-hover:text-primary"/>
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-bold text-primary group-hover:underline">{book.title}</p>
+                        <p className="text-sm text-muted-foreground">by {book.author}</p>
+                      </div>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+        )}
+        </>
       )}
     </div>
   );

@@ -25,8 +25,15 @@ const RoadmapSectionSchema = z.object({
   steps: z.array(RoadmapStepSchema).describe('An ordered list of learning steps within this section.'),
 });
 
+const BookReferenceSchema = z.object({
+    title: z.string().describe("The title of the reference book."),
+    author: z.string().describe("The author(s) of the book."),
+    url: z.string().url().describe("A URL to find or purchase the book (e.g., Amazon, Google Books, or publisher's page).")
+});
+
 const GenerateLearningRoadmapOutputSchema = z.object({
   roadmap: z.array(RoadmapSectionSchema).describe('The structured learning roadmap, divided into sections.'),
+  referenceBooks: z.array(BookReferenceSchema).describe('A list of 2-3 highly-rated and relevant reference books for the topic.'),
 });
 export type GenerateLearningRoadmapOutput = z.infer<typeof GenerateLearningRoadmapOutputSchema>;
 
@@ -42,6 +49,8 @@ const prompt = ai.definePrompt({
   prompt: `You are an expert curriculum designer. Your task is to generate a comprehensive, structured learning roadmap for a given topic, similar in concept to the NeetCode.io roadmap for algorithms.
 
 For the topic "{{topic}}", create a clear, step-by-step learning path. Group related concepts into logical sections (e.g., "Fundamentals", "Intermediate Concepts", "Advanced Techniques"). Each step within a section should represent a specific concept or skill to learn.
+
+After creating the roadmap, find 2-3 highly-rated and relevant reference books that would be excellent resources for learning this topic. Provide the book title, author, and a valid URL where the book can be found.
 
 The roadmap should be ordered logically, starting from the most fundamental concepts and progressing to more advanced ones. Ensure the output is a JSON object that strictly follows the provided schema.
 `,
