@@ -20,8 +20,7 @@ const ICONS = [
 ];
 
 const shuffleArray = (array: any[]) => {
-    // Math.random() is not safe to use on server, but this is a client component
-    // so it's fine.
+    // This function uses Math.random() and should only be called on the client.
     for (let i = array.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [array[i], array[j]] = [array[j], array[i]];
@@ -36,17 +35,26 @@ const generateCards = () => {
 
 
 export default function MemoryGamePage() {
-    const [cards, setCards] = useState(generateCards());
+    const [cards, setCards] = useState<ReturnType<typeof generateCards>>([]);
     const [flipped, setFlipped] = useState<number[]>([]);
     const [matched, setMatched] = useState<string[]>([]);
     const [moves, setMoves] = useState(0);
     const { addScore } = useGameScores();
     const [isChecking, setIsChecking] = useState(false);
     const [isRevealing, setIsRevealing] = useState(true);
+    const [isClient, setIsClient] = useState(false);
+
+    useEffect(() => {
+        // This ensures the code inside runs only on the client, avoiding hydration errors.
+        setIsClient(true);
+        resetGame(true); // Initial game setup on client
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const isGameOver = matched.length === ICONS.length;
     
     useEffect(() => {
+        if (cards.length === 0) return; // Don't run reveal timer on initial empty state
         setIsRevealing(true);
         const revealTimer = setTimeout(() => {
             setIsRevealing(false);
@@ -80,7 +88,8 @@ export default function MemoryGamePage() {
             const score = Math.max(0, 100 - (moves - ICONS.length * 2) * 5); // Example scoring logic
             addScore('memory', score);
         }
-    }, [isGameOver, moves, addScore]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isGameOver, moves]);
 
 
     const handleCardClick = (index: number) => {
@@ -93,13 +102,20 @@ export default function MemoryGamePage() {
         setMoves(m => m + 1);
     };
 
-    const resetGame = () => {
+    const resetGame = (initial = false) => {
         setCards(generateCards());
         setFlipped([]);
         setMatched([]);
         setMoves(0);
-        setIsRevealing(true);
+        if (!initial) {
+            setIsRevealing(true);
+        }
     };
+    
+    // Render nothing on the server to prevent mismatch
+    if (!isClient) {
+        return null;
+    }
 
   return (
     <div className="flex items-center justify-center">
@@ -114,7 +130,7 @@ export default function MemoryGamePage() {
                         <CheckCircle2 className="h-16 w-16 text-green-500" />
                         <h2 className="text-2xl font-bold">You Won!</h2>
                         <p className="text-muted-foreground">You completed the game in {moves} moves.</p>
-                        <Button onClick={resetGame}>
+                        <Button onClick={() => resetGame()}>
                             <RefreshCw className="mr-2 h-4 w-4" />
                             Play Again
                         </Button>
