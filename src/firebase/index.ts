@@ -10,8 +10,6 @@ const useAuth = () => ({});
 const useFirestore = () => ({});
 const useFirebaseApp = () => ({});
 const useUser = () => ({ user: null, isUserLoading: false });
-const useMemoFirebase = <T>(factory: () => T, deps: any[]) => factory();
-
 
 export {
     useFirebase,
@@ -19,7 +17,6 @@ export {
     useFirestore,
     useFirebaseApp,
     useUser,
-    useMemoFirebase,
 }
 
 export * from './firestore/use-collection';
