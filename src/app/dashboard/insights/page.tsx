@@ -1,15 +1,16 @@
 'use client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { BarChart3, CheckCircle, Clock, Gamepad2 } from 'lucide-react';
+import { Clock, CheckCircle, Gamepad2 } from 'lucide-react';
 import { useUser, useFirestore, useMemoFirebase } from '@/firebase';
 import { useCollection } from '@/firebase/firestore/use-collection';
 import { collection } from 'firebase/firestore';
 import { useTasks } from '@/context/TaskContext';
 import { useGameScores } from '@/context/GameScoreContext';
-import { useMemo } from 'react';
-import { isThisWeek, parseISO } from 'date-fns';
+import { useMemo, useState } from 'react';
+import { isThisWeek, parseISO, subDays, format, isWithinInterval } from 'date-fns';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer, LabelList } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface StudySession {
   id: string;
@@ -17,11 +18,14 @@ interface StudySession {
   endTime: string;
 }
 
+type TimeRange = 'this_week' | 'last_15_days';
+
 const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 export default function InsightsPage() {
   const { user } = useUser();
   const firestore = useFirestore();
+  const [timeRange, setTimeRange] = useState<TimeRange>('this_week');
 
   const sessionsCollectionPath = useMemo(() => {
     if (!user) return null;
@@ -35,22 +39,48 @@ export default function InsightsPage() {
 
   const { data: allSessions } = useCollection<StudySession>(sessionsQuery);
 
-  const weeklySessions = useMemo(() => {
-    return (allSessions || []).filter(session => isThisWeek(parseISO(session.endTime), { weekStartsOn: 1 }));
-  }, [allSessions]);
-
+  const filteredSessions = useMemo(() => {
+    if (!allSessions) return [];
+    const now = new Date();
+    if (timeRange === 'this_week') {
+      return allSessions.filter(session => isThisWeek(parseISO(session.endTime), { weekStartsOn: 0 }));
+    } else { // 'last_15_days'
+      const fifteenDaysAgo = subDays(now, 14); // 14 days ago to include today makes 15 days
+      return allSessions.filter(session => isWithinInterval(parseISO(session.endTime), { start: fifteenDaysAgo, end: now }));
+    }
+  }, [allSessions, timeRange]);
+  
   const totalStudyMinutes = useMemo(() => {
-    return weeklySessions.reduce((total, session) => total + session.duration, 0);
-  }, [weeklySessions]);
+    return filteredSessions.reduce((total, session) => total + session.duration, 0);
+  }, [filteredSessions]);
   
   const studyDataByDay = useMemo(() => {
-    const data = weekDays.map(day => ({ day, minutes: 0 }));
-    weeklySessions.forEach(session => {
-        const dayIndex = parseISO(session.endTime).getDay();
-        data[dayIndex].minutes += session.duration;
-    });
-    return data;
-  }, [weeklySessions]);
+    if (timeRange === 'this_week') {
+        const data = weekDays.map(day => ({ name: day, minutes: 0 }));
+        filteredSessions.forEach(session => {
+            const dayIndex = parseISO(session.endTime).getDay();
+            data[dayIndex].minutes += session.duration;
+        });
+        return data;
+    } else { // 'last_15_days'
+        const dataMap = new Map<string, number>();
+        const now = new Date();
+        for (let i = 0; i < 15; i++) {
+            const day = subDays(now, i);
+            const formattedDay = format(day, 'MMM d');
+            dataMap.set(formattedDay, 0);
+        }
+
+        filteredSessions.forEach(session => {
+            const dayStr = format(parseISO(session.endTime), 'MMM d');
+            if(dataMap.has(dayStr)) {
+                dataMap.set(dayStr, (dataMap.get(dayStr) || 0) + session.duration);
+            }
+        });
+        
+        return Array.from(dataMap.entries()).map(([name, minutes]) => ({ name, minutes })).reverse();
+    }
+  }, [filteredSessions, timeRange]);
 
 
   const { tasks } = useTasks();
@@ -83,12 +113,12 @@ export default function InsightsPage() {
       <div className="grid gap-6 md:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Study Time (This Week)</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Study Time</CardTitle>
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totalStudyMinutes} minutes</div>
-            <p className="text-xs text-muted-foreground">From completed Pomodoro sessions</p>
+            <p className="text-xs text-muted-foreground">in the selected period</p>
           </CardContent>
         </Card>
         <Card>
@@ -114,19 +144,31 @@ export default function InsightsPage() {
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle>Weekly Study Activity</CardTitle>
-          <CardDescription>Minutes spent in focus sessions each day.</CardDescription>
+        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+          <div>
+            <CardTitle>Study Activity</CardTitle>
+            <CardDescription>Minutes spent in focus sessions each day.</CardDescription>
+          </div>
+           <Select value={timeRange} onValueChange={(value: TimeRange) => setTimeRange(value)}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Select a range" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="this_week">This Week</SelectItem>
+                  <SelectItem value="last_15_days">Last 15 Days</SelectItem>
+                </SelectContent>
+            </Select>
         </CardHeader>
         <CardContent>
           <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
             <BarChart accessibilityLayer data={studyDataByDay} margin={{ top: 20 }}>
               <CartesianGrid vertical={false} />
               <XAxis
-                dataKey="day"
+                dataKey="name"
                 tickLine={false}
                 tickMargin={10}
                 axisLine={false}
+                tick={{ fontSize: 12 }}
               />
                <YAxis
                 tickLine={false}
