@@ -1,68 +1,57 @@
 
 'use client';
-import { useState, useRef, useEffect } from 'react';
+import { useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { musicTracks } from '@/lib/data';
-import { Play, Pause, SkipForward, Music, Volume2, VolumeX } from 'lucide-react';
+import { Play, Pause, SkipForward, Music, Volume2, VolumeX, SkipBack } from 'lucide-react';
 import Image from 'next/image';
 import { Slider } from '@/components/ui/slider';
+import { useMusic } from '@/context/MusicContext';
 
 type MusicTrack = typeof musicTracks[0];
 
 export default function MusicPage() {
-  const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [volume, setVolume] = useState(0.5);
-  const [isMuted, setIsMuted] = useState(false);
+  const {
+    currentTrack,
+    isPlaying,
+    volume,
+    isMuted,
+    playNext,
+    playPrevious,
+    togglePlay,
+    setVolume,
+    toggleMute,
+    selectTrack
+  } = useMusic();
+
   const audioRef = useRef<HTMLAudioElement>(null);
   
-  const currentTrack = musicTracks[currentTrackIndex];
-
   useEffect(() => {
     if (audioRef.current) {
-        audioRef.current.volume = isMuted ? 0 : volume;
+      audioRef.current.volume = isMuted ? 0 : volume;
     }
   }, [volume, isMuted]);
 
   useEffect(() => {
     if (audioRef.current) {
       if (isPlaying) {
-        audioRef.current.load(); // Load the new track
+        audioRef.current.src = currentTrack.url;
+        audioRef.current.load();
         audioRef.current.play().catch(error => console.error("Error playing audio:", error));
       } else {
         audioRef.current.pause();
       }
     }
-  }, [isPlaying, currentTrackIndex]);
+  }, [isPlaying, currentTrack]);
 
-
-  const handlePlayPause = () => {
-    setIsPlaying(!isPlaying);
-  };
-
-  const handleNext = () => {
-    setCurrentTrackIndex((prevIndex) => (prevIndex + 1) % musicTracks.length);
-    setIsPlaying(true);
-  };
-  
-  const handleSelectTrack = (track: MusicTrack) => {
-    const trackIndex = musicTracks.findIndex(t => t.id === track.id);
-    setCurrentTrackIndex(trackIndex);
-    setIsPlaying(true);
-  }
 
   const handleVolumeChange = (value: number[]) => {
     setVolume(value[0]);
-    if (isMuted) setIsMuted(false);
-  }
-
-  const handleMuteToggle = () => {
-      setIsMuted(!isMuted);
   }
 
   const handleTrackEnded = () => {
-      handleNext();
+    playNext();
   }
 
   return (
@@ -82,18 +71,21 @@ export default function MusicPage() {
               <p className="text-muted-foreground">{currentTrack.artist}</p>
             </div>
             <div className="flex items-center justify-center gap-4">
-               <audio ref={audioRef} src={currentTrack.url} onEnded={handleTrackEnded} />
-              <Button size="icon" variant="ghost" className="rounded-full h-16 w-16" onClick={handleMuteToggle}>
-                {isMuted || volume === 0 ? <VolumeX className="h-6 w-6" /> : <Volume2 className="h-6 w-6" />}
+              <audio ref={audioRef} src={currentTrack.url} onEnded={handleTrackEnded} />
+              <Button size="icon" variant="ghost" className="rounded-full h-16 w-16" onClick={playPrevious}>
+                <SkipBack className="h-6 w-6" />
               </Button>
-              <Button size="icon" variant="ghost" className="rounded-full h-20 w-20" onClick={handlePlayPause}>
+              <Button size="icon" variant="ghost" className="rounded-full h-20 w-20" onClick={togglePlay}>
                 {isPlaying ? <Pause className="h-8 w-8" /> : <Play className="h-8 w-8" />}
               </Button>
-              <Button size="icon" variant="ghost" className="rounded-full h-16 w-16" onClick={handleNext}>
+              <Button size="icon" variant="ghost" className="rounded-full h-16 w-16" onClick={playNext}>
                 <SkipForward className="h-6 w-6" />
               </Button>
             </div>
-            <div className="px-10">
+            <div className="px-10 flex items-center gap-4">
+              <Button size="icon" variant="ghost" onClick={toggleMute}>
+                {isMuted || volume === 0 ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
+              </Button>
               <Slider
                 value={[isMuted ? 0 : volume]}
                 max={1}
@@ -115,7 +107,7 @@ export default function MusicPage() {
             <ul className="space-y-2">
               {musicTracks.map(track => (
                 <li key={track.id}>
-                  <button onClick={() => handleSelectTrack(track)} className={`w-full text-left p-3 rounded-lg flex justify-between items-center transition-colors ${currentTrack.id === track.id ? 'bg-primary/10 text-primary' : 'hover:bg-accent'}`}>
+                  <button onClick={() => selectTrack(track.id)} className={`w-full text-left p-3 rounded-lg flex justify-between items-center transition-colors ${currentTrack.id === track.id ? 'bg-primary/10 text-primary' : 'hover:bg-accent'}`}>
                     <div>
                       <p className="font-medium">{track.title}</p>
                       <p className="text-sm text-muted-foreground">{track.artist}</p>
