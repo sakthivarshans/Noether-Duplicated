@@ -11,6 +11,7 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { UserNav } from './user-nav';
 import Mascot from '../mascot';
 import { useGameScores } from '@/context/GameScoreContext';
+import { ThemeToggle } from '../theme-toggle';
 
 const navItems = [
     { href: '/dashboard', label: 'Dashboard' },
@@ -64,6 +65,7 @@ export function Header() {
       <div className="w-full flex-1">
         {/* Can be used for breadcrumbs or page titles */}
       </div>
+      <ThemeToggle />
       <div className="flex items-center gap-2">
         <Award className="h-5 w-5 text-primary" />
         <span className="font-bold text-lg">{totalScore}</span>
