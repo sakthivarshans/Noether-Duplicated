@@ -8,6 +8,7 @@ import { Upload, FileText, Zap, BrainCircuit, BarChart3, Loader2, RotateCw } fro
 import { summarizeAndHighlightDocument, SummarizeAndHighlightDocumentOutput } from '@/ai/flows/summarize-and-highlight-document';
 import { generateFlashcardsFromDocument } from '@/ai/flows/generate-flashcards-from-document';
 import { useToast } from '@/hooks/use-toast';
+import { Skeleton } from '@/components/ui/skeleton';
 
 type Flashcard = {
   front: string;
@@ -89,6 +90,31 @@ export default function UploadPage() {
     });
   }
 
+  const InsightsSkeleton = () => (
+    <div className="grid gap-6 lg:grid-cols-2">
+      <Card>
+        <CardHeader>
+          <Skeleton className="h-6 w-32" />
+        </CardHeader>
+        <CardContent className="space-y-2">
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-4/5" />
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <Skeleton className="h-6 w-40" />
+        </CardHeader>
+        <CardContent className="space-y-2">
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-2/3" />
+        </CardContent>
+      </Card>
+    </div>
+  );
+
   return (
     <div className="space-y-6">
       <Card>
@@ -114,6 +140,8 @@ export default function UploadPage() {
           </Button>
         </CardContent>
       </Card>
+
+      {isProcessing && <InsightsSkeleton />}
 
       {result && (
         <div className="grid gap-6 lg:grid-cols-2">
@@ -187,7 +215,21 @@ export default function UploadPage() {
                   </div>
                 ))
               ) : (
-                <p className="text-muted-foreground col-span-full text-center py-8">No flashcards generated yet.</p>
+                isGeneratingFlashcards ? (
+                    Array.from({ length: 3 }).map((_, i) => (
+                        <Card key={i} className="h-64">
+                            <CardHeader>
+                                <Skeleton className="h-5 w-20" />
+                            </CardHeader>
+                            <CardContent>
+                                <Skeleton className="h-4 w-full" />
+                                <Skeleton className="h-4 w-4/5 mt-2" />
+                            </CardContent>
+                        </Card>
+                    ))
+                ) : (
+                    <p className="text-muted-foreground col-span-full text-center py-8">No flashcards generated yet.</p>
+                )
               )}
             </CardContent>
           </Card>

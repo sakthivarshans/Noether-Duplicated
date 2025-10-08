@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Input } from '@/components/ui/input';
 import { Upload, Zap, BrainCircuit, Loader2, RotateCw } from 'lucide-react';
 import { generateFlashcardsFromDocument, GenerateFlashcardsFromDocumentOutput } from '@/ai/flows/generate-flashcards-from-document';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function FlashcardsPage() {
   const [fileName, setFileName] = useState<string | null>(null);
@@ -65,6 +66,22 @@ export default function FlashcardsPage() {
     });
   }
 
+  const FlashcardSkeleton = () => (
+    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {Array.from({ length: 6 }).map((_, i) => (
+            <Card key={i} className="h-64">
+                <CardHeader>
+                    <Skeleton className="h-5 w-20" />
+                </CardHeader>
+                <CardContent>
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-4/5 mt-2" />
+                </CardContent>
+            </Card>
+        ))}
+    </div>
+  )
+
   return (
     <div className="space-y-6">
       <Card>
@@ -91,6 +108,8 @@ export default function FlashcardsPage() {
         </CardContent>
       </Card>
       
+      {isProcessing && <FlashcardSkeleton />}
+
       {result && (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {result.flashcards.map((flashcard, index) => (
@@ -148,4 +167,3 @@ export default function FlashcardsPage() {
     </div>
   );
 }
-

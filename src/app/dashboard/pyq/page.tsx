@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Upload, Zap, Clipboard, Download, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { generateAnswersForPYQ } from '@/ai/flows/generate-answers-for-pyq';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function PYQPage() {
   const [text, setText] = useState('');
@@ -67,6 +68,21 @@ export default function PYQPage() {
     }
   };
 
+  const AnswerSkeleton = () => (
+    <Card>
+      <CardHeader>
+        <Skeleton className="h-6 w-48" />
+        <Skeleton className="h-4 w-64 mt-1" />
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-4/5" />
+      </CardContent>
+    </Card>
+  );
+
   return (
     <div className="space-y-6">
       <Card>
@@ -95,6 +111,8 @@ export default function PYQPage() {
           </div>
         </CardContent>
       </Card>
+
+      {isProcessing && <AnswerSkeleton />}
 
       {result && (
         <Card>
