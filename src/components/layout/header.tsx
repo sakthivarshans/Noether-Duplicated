@@ -4,6 +4,7 @@ import {
   Menu,
   Award,
   BarChart3,
+  User as UserIcon,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -11,6 +12,17 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import Mascot from '../mascot';
 import { useGameScores } from '@/context/GameScoreContext';
 import { ThemeToggle } from '../theme-toggle';
+import { useUserSession } from '@/context/UserSessionContext';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+
 
 const navItems = [
     { href: '/dashboard', label: 'Dashboard' },
@@ -30,6 +42,12 @@ const navItems = [
 
 export function Header() {
   const { totalScore } = useGameScores();
+  const { user, logout } = useUserSession();
+
+  const getInitials = (name: string) => {
+    return name.split(' ').map(n => n[0]).join('').toUpperCase();
+  }
+
   return (
     <header className="flex h-14 items-center gap-4 border-b bg-card px-4 lg:h-[60px] lg:px-6">
       <Sheet>
@@ -69,6 +87,31 @@ export function Header() {
         <Award className="h-5 w-5 text-primary" />
         <span className="font-bold text-lg">{totalScore}</span>
       </div>
+      {user && (
+         <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="secondary" size="icon" className="rounded-full">
+                <Avatar>
+                  <AvatarImage src={`https://api.dicebear.com/8.x/bottts/svg?seed=${user.email}`} alt={user.name} />
+                  <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
+                </Avatar>
+                <span className="sr-only">Toggle user menu</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+               <div className="px-2 py-1.5 text-sm">
+                  <p className="font-medium">{user.name}</p>
+                  <p className="text-xs text-muted-foreground">{user.email}</p>
+               </div>
+               <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={logout}>
+                Log out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+      )}
     </header>
   );
 }

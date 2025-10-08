@@ -4,6 +4,7 @@ import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { cn } from '@/lib/utils';
 import { ThemeProvider } from '@/components/theme-provider';
+import { UserSessionProvider } from '@/context/UserSessionContext';
 
 const fontBody = Lexend({
   subsets: ['latin'],
@@ -62,7 +63,9 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+          <UserSessionProvider>
+            {children}
+          </UserSessionProvider>
           <Toaster />
         </ThemeProvider>
       </body>

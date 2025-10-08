@@ -6,7 +6,6 @@ import FloatingPomodoroTimer from '@/components/dashboard/FloatingPomodoroTimer'
 import { GameScoreProvider } from '@/context/GameScoreContext';
 import { MusicProvider } from '@/context/MusicContext';
 import FloatingMusicPlayer from '@/components/dashboard/FloatingMusicPlayer';
-import { UserSessionProvider } from '@/context/UserSessionContext';
 
 export default function DashboardLayout({
   children,
@@ -14,7 +13,6 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <UserSessionProvider>
       <GameScoreProvider>
         <TaskProvider>
           <PomodoroProvider>
@@ -34,6 +32,5 @@ export default function DashboardLayout({
           </PomodoroProvider>
         </TaskProvider>
       </GameScoreProvider>
-    </UserSessionProvider>
   );
 }

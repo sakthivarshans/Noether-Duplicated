@@ -1,16 +1,22 @@
-
 'use client';
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useUserSession } from '@/context/UserSessionContext';
 
-// Redirect to the dashboard immediately
 export default function LandingPage() {
   const router = useRouter();
+  const { user, isLoading } = useUserSession();
 
   useEffect(() => {
-    router.replace('/dashboard');
-  }, [router]);
+    if (!isLoading) {
+      if (user) {
+        router.replace('/dashboard');
+      } else {
+        router.replace('/login');
+      }
+    }
+  }, [user, isLoading, router]);
 
-  return null; // Render nothing while redirecting
+  return null; // Or a loading spinner
 }

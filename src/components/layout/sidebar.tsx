@@ -17,9 +17,12 @@ import {
   Bed,
   Waypoints,
   BarChart3,
+  LogOut,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Mascot from '@/components/mascot';
+import { Button } from '../ui/button';
+import { useUserSession } from '@/context/UserSessionContext';
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: Home },
@@ -43,6 +46,7 @@ const toolsItems = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { logout } = useUserSession();
 
   const NavLink = ({ href, label, icon: Icon }: { href: string; label: string; icon: React.ElementType }) => (
     <li>
@@ -61,7 +65,7 @@ export function Sidebar() {
   
   return (
     <div className="hidden border-r bg-card md:block">
-      <div className="flex h-full max-h-screen flex-col gap-2">
+      <div className="flex h-full max-h-screen flex-col">
         <div className="flex h-14 items-center border-b px-6">
           <Link href="/dashboard" className="flex items-center gap-2 font-headline font-semibold">
             <div className="w-8 h-8"><Mascot /></div>
@@ -76,6 +80,12 @@ export function Sidebar() {
               {toolsItems.sort((a, b) => a.label.localeCompare(b.label)).map(item => <NavLink key={item.href} {...item} />)}
             </ul>
           </nav>
+        </div>
+        <div className="mt-auto p-4 border-t">
+            <Button variant="ghost" className="w-full justify-start" onClick={logout}>
+                <LogOut className="mr-2 h-4 w-4" />
+                Sign Out
+            </Button>
         </div>
       </div>
     </div>

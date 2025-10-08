@@ -1,6 +1,7 @@
 'use client';
 
-import React, { createContext, useContext, ReactNode, useMemo, useEffect, useState } from 'react';
+import React, { createContext, useContext, ReactNode, useMemo, useEffect, useState, useCallback } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
 import type { GameScore } from './GameScoreContext';
 import type { Task } from './TaskContext';
 
@@ -11,7 +12,13 @@ interface StudySession {
   duration: number;
 }
 
+interface FakeUser {
+  name: string;
+  email: string;
+}
+
 interface UserSessionContextType {
+  user: FakeUser | null;
   studySessions: StudySession[];
   tasks: Task[];
   gameScores: GameScore[];
@@ -20,32 +27,69 @@ interface UserSessionContextType {
   updateTask: (taskId: string, updates: Partial<Task>) => void;
   deleteTask: (taskId: string) => void;
   addGameScore: (score: GameScore) => void;
+  login: (user: FakeUser) => void;
+  logout: () => void;
   isLoading: boolean;
 }
 
 const UserSessionContext = createContext<UserSessionContextType | undefined>(undefined);
 
 export const UserSessionProvider = ({ children }: { children: ReactNode }) => {
+  const [user, setUser] = useState<FakeUser | null>(null);
   const [studySessions, setStudySessions] = useState<StudySession[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [gameScores, setGameScores] = useState<GameScore[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     try {
+      const storedUser = localStorage.getItem('fakeUser');
       const storedSessions = localStorage.getItem('studySessions');
       const storedTasks = localStorage.getItem('tasks');
       const storedGameScores = localStorage.getItem('gameScores');
+      
+      const currentUser = storedUser ? JSON.parse(storedUser) : null;
+      setUser(currentUser);
 
       if (storedSessions) setStudySessions(JSON.parse(storedSessions));
       if (storedTasks) setTasks(JSON.parse(storedTasks));
       if (storedGameScores) setGameScores(JSON.parse(storedGameScores));
+
+      if (!currentUser && pathname.startsWith('/dashboard')) {
+        router.replace('/login');
+      }
+
     } catch (error) {
       console.error("Failed to load data from localStorage", error);
+       if (pathname.startsWith('/dashboard')) {
+        router.replace('/login');
+      }
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]);
+
+  const login = (user: FakeUser) => {
+    localStorage.setItem('fakeUser', JSON.stringify(user));
+    setUser(user);
+    router.push('/dashboard');
+  }
+
+  const logout = useCallback(() => {
+    localStorage.removeItem('fakeUser');
+    // Optional: clear all app data on logout
+    localStorage.removeItem('studySessions');
+    localStorage.removeItem('tasks');
+    localStorage.removeItem('gameScores');
+    setUser(null);
+    setStudySessions([]);
+    setTasks([]);
+    setGameScores([]);
+    router.push('/login');
+  }, [router]);
 
   const addStudySession = (session: StudySession) => {
     setStudySessions(prev => {
@@ -88,6 +132,7 @@ export const UserSessionProvider = ({ children }: { children: ReactNode }) => {
   }
   
   const contextValue = useMemo(() => ({
+    user,
     studySessions,
     tasks,
     gameScores,
@@ -96,17 +141,15 @@ export const UserSessionProvider = ({ children }: { children: ReactNode }) => {
     updateTask,
     deleteTask,
     addGameScore,
+    login,
+    logout,
     isLoading,
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), [studySessions, tasks, gameScores, isLoading]);
-  
-  if (isLoading) {
-    return null;
-  }
+  }), [user, studySessions, tasks, gameScores, isLoading, logout]);
 
   return (
     <UserSessionContext.Provider value={contextValue}>
-      {children}
+      {isLoading ? null : children}
     </UserSessionContext.Provider>
   );
 };
