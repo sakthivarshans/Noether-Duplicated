@@ -10,7 +10,6 @@ const gameIcons: { [key: string]: React.ElementType } = {
   sudoku: Brain,
   memory: Dna,
   reaction: Zap,
-  quiz: BrainCircuit,
 };
 
 export default function GamesPage() {
@@ -35,7 +34,7 @@ export default function GamesPage() {
         {games.map(game => {
           const Icon = gameIcons[game.id] || Brain;
           const highScore = getHighScore(game.id);
-          const href = game.id === 'quiz' ? '/dashboard/quiz' : `/dashboard/games/${game.id}`;
+          const href = `/dashboard/games/${game.id}`;
           return (
             <Link href={href} key={game.id}>
               <Card className="group h-full flex flex-col justify-between hover:bg-accent hover:border-primary/50 transition-all transform hover:-translate-y-1">

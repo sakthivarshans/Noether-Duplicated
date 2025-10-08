@@ -43,5 +43,4 @@ export const games = [
     { id: 'sudoku', name: 'Sudoku', description: 'A classic logic puzzle.' },
     { id: 'memory', name: 'Memory Game', description: 'Match pairs of cards.' },
     { id: 'reaction', name: 'Reaction Time', description: 'Test your reflexes.' },
-    { id: 'quiz', name: 'AI Document Quiz', description: 'Test your knowledge on uploaded docs.'},
 ];
