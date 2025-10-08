@@ -7,6 +7,7 @@ import { Search, Loader2, Link as LinkIcon } from 'lucide-react';
 import { enhancedTopicSearch, EnhancedTopicSearchOutput } from '@/ai/flows/enhanced-topic-search';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function SearchPage() {
   const [query, setQuery] = useState("Newton's Laws of Motion");
@@ -32,6 +33,35 @@ export default function SearchPage() {
       setIsSearching(false);
     }
   };
+  
+  const SearchSkeleton = () => (
+    <Card>
+      <CardHeader>
+        <Skeleton className="h-7 w-2/3" />
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-2">
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-5/6" />
+        </div>
+        <div className="mt-6">
+          <Skeleton className="h-6 w-32 mb-3" />
+          <div className="space-y-3">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-secondary/50">
+                <Skeleton className="h-4 w-4 rounded" />
+                <div className="flex-1 space-y-1">
+                  <Skeleton className="h-5 w-1/2" />
+                  <Skeleton className="h-3 w-3/4" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  )
 
   return (
     <div className="space-y-6">
@@ -57,11 +87,7 @@ export default function SearchPage() {
         </CardContent>
       </Card>
       
-      {isSearching && (
-          <div className="flex justify-center items-center p-10">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          </div>
-      )}
+      {isSearching && <SearchSkeleton />}
 
       {result && (
         <Card>

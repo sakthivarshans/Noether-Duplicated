@@ -7,6 +7,7 @@ import { Waypoints, Loader2, ListOrdered, CheckCircle } from 'lucide-react';
 import { generateLearningRoadmap, GenerateLearningRoadmapOutput } from '@/ai/flows/generate-learning-roadmap';
 import { useToast } from '@/hooks/use-toast';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function RoadmapPage() {
   const [topic, setTopic] = useState('Quantum Computing');
@@ -33,6 +34,26 @@ export default function RoadmapPage() {
     }
   };
 
+  const RoadmapSkeleton = () => (
+    <Card>
+      <CardHeader>
+        <Skeleton className="h-7 w-2/3" />
+        <Skeleton className="h-4 w-1/2 mt-1" />
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div key={i} className="border-b pb-4">
+            <Skeleton className="h-6 w-1/3" />
+            <div className="pl-14 mt-4 space-y-4">
+               <Skeleton className="h-5 w-3/4" />
+               <Skeleton className="h-5 w-1/2" />
+            </div>
+          </div>
+        ))}
+      </CardContent>
+    </Card>
+  )
+
   return (
     <div className="space-y-6">
       <Card>
@@ -57,12 +78,7 @@ export default function RoadmapPage() {
         </CardContent>
       </Card>
       
-      {isGenerating && (
-          <div className="flex justify-center items-center p-10">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <p className="ml-4 text-muted-foreground">Building your roadmap... this might take a moment.</p>
-          </div>
-      )}
+      {isGenerating && <RoadmapSkeleton />}
 
       {result && (
         <Card>
