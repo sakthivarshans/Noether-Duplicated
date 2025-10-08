@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Upload, FileText, Zap, BrainCircuit, BarChart3, Loader2, RotateCw } from 'lucide-react';
+import { Upload, FileText, Zap, BrainCircuit, BarChart3, Loader2, RotateCw, Download } from 'lucide-react';
 import { summarizeAndHighlightDocument, SummarizeAndHighlightDocumentOutput } from '@/ai/flows/summarize-and-highlight-document';
 import { generateFlashcardsFromDocument } from '@/ai/flows/generate-flashcards-from-document';
 import { useToast } from '@/hooks/use-toast';
@@ -114,6 +114,54 @@ export default function UploadPage() {
     });
   }
 
+  const handleDownload = () => {
+    if (!result) return;
+
+    let content = `SOURCE DOCUMENT: ${fileName}\n\n`;
+    content += "====================\n";
+    content += "AI-GENERATED SUMMARY\n";
+    content += "====================\n\n";
+    content += result.summary + "\n\n";
+
+    content += "====================\n";
+    content += "KEY HIGHLIGHTS\n";
+    content += "====================\n\n";
+    result.highlights.forEach(h => content += `- ${h}\n`);
+    content += "\n";
+
+    if (generatedFlashcards.length > 0) {
+      content += "====================\n";
+      content += "FLASHCARDS\n";
+      content += "====================\n\n";
+      generatedFlashcards.forEach((fc, i) => {
+        content += `Q${i+1}: ${fc.front}\n`;
+        content += `A${i+1}: ${fc.back}\n\n`;
+      });
+    }
+
+    if (result.flowchart) {
+      content += "====================\n";
+      content += "FLOWCHART\n";
+      content += "====================\n\n";
+      content += result.flowchart + "\n\n";
+    }
+
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `noether_insights_${fileName?.split('.')[0] || 'document'}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    toast({
+        title: "Download Started",
+        description: "Your generated insights are being downloaded as a .txt file.",
+    });
+  }
+
   const InsightsSkeleton = () => (
     <div className="grid gap-6 lg:grid-cols-2">
       <Card>
@@ -164,10 +212,18 @@ export default function UploadPage() {
               </div>
             )}
           </div>
-          <Button onClick={handleUpload} disabled={!fileName || isProcessing || uploadProgress !== null} className="w-full sm:w-auto">
-            {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Zap className="mr-2 h-4 w-4" />}
-            {isProcessing ? 'Processing...' : 'Generate Insights'}
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            <Button onClick={handleUpload} disabled={!fileName || isProcessing || uploadProgress !== null} className="w-full">
+              {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Zap className="mr-2 h-4 w-4" />}
+              {isProcessing ? 'Processing...' : 'Generate Insights'}
+            </Button>
+            {result && (
+              <Button onClick={handleDownload} variant="outline" className="w-full">
+                <Download className="mr-2 h-4 w-4" />
+                Download
+              </Button>
+            )}
+          </div>
         </CardContent>
       </Card>
 
