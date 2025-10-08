@@ -37,7 +37,7 @@ export const TaskProvider = ({ children }: { children: ReactNode }) => {
   const [notifiedTasks, setNotifiedTasks] = useState<string[]>([]);
 
   const tasksCollectionPath = useMemo(() => {
-    if (!user) return null;
+    if (!user || user.isAnonymous) return null;
     return `users/${user.uid}/todoTasks`;
   }, [user]);
 
