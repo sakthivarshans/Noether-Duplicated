@@ -55,8 +55,10 @@ export const UserSessionProvider = ({ children }: { children: ReactNode }) => {
     isLoading,
   }), [studySessions, tasks, gameScores, isLoading]);
   
-  // Do not render children until the initial user load and subsequent data fetches are complete.
-  // This is the key fix to prevent downstream components from triggering their own hooks too early.
+  // This is the critical change. We will not render any children until the user is resolved
+  // AND all dependent data collections have finished their initial load.
+  // This prevents any downstream component from triggering a hook that depends on this context
+  // before the context is fully ready.
   if (isLoading) {
     return null;
   }
