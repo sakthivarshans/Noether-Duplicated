@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
@@ -32,7 +33,7 @@ const problems = [
 ];
 
 export default function PowerNapPage() {
-  const [duration, setDuration] = useState(15);
+  const [duration, setDuration] = useState(2);
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
   const [isActive, setIsActive] = useState(false);
   const [showAlarm, setShowAlarm] = useState(false);
@@ -119,10 +120,10 @@ export default function PowerNapPage() {
             </p>
             {!isActive && (
               <Slider
-                defaultValue={[15]}
+                defaultValue={[2]}
                 max={30}
-                min={5}
-                step={5}
+                min={2}
+                step={1}
                 onValueChange={(value) => setDuration(value[0])}
               />
             )}
