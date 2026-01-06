@@ -5,6 +5,12 @@ import { Toaster } from '@/components/ui/toaster';
 import { cn } from '@/lib/utils';
 import { ThemeProvider } from '@/components/theme-provider';
 import { UserSessionProvider } from '@/context/UserSessionContext';
+import { GameScoreProvider } from '@/context/GameScoreContext';
+import { TaskProvider } from '@/context/TaskContext';
+import { PomodoroProvider } from '@/context/PomodoroContext';
+import FloatingPomodoroTimer from '@/components/dashboard/FloatingPomodoroTimer';
+import { MusicProvider } from '@/context/MusicContext';
+import FloatingMusicPlayer from '@/components/dashboard/FloatingMusicPlayer';
 
 const fontBody = Lexend({
   subsets: ['latin'],
@@ -64,7 +70,17 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <UserSessionProvider>
-            {children}
+            <GameScoreProvider>
+              <TaskProvider>
+                <PomodoroProvider>
+                  <MusicProvider>
+                    {children}
+                    <FloatingPomodoroTimer />
+                    <FloatingMusicPlayer />
+                  </MusicProvider>
+                </PomodoroProvider>
+              </TaskProvider>
+            </GameScoreProvider>
           </UserSessionProvider>
           <Toaster />
         </ThemeProvider>
