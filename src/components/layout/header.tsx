@@ -13,6 +13,7 @@ import Mascot from '../mascot';
 import { useGameScores } from '@/context/GameScoreContext';
 import { ThemeToggle } from '../theme-toggle';
 import { useUserSession } from '@/context/UserSessionContext';
+import { useFirebase } from '@/firebase';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -42,10 +43,15 @@ const navItems = [
 
 export function Header() {
   const { totalScore } = useGameScores();
-  const { user, logout } = useUserSession();
+  const { user } = useUserSession();
+  const { auth } = useFirebase();
 
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
+  }
+
+  const handleLogout = () => {
+    auth.signOut();
   }
 
   return (
@@ -106,7 +112,7 @@ export function Header() {
                   <p className="text-xs text-muted-foreground">{user.email}</p>
                </div>
                <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={logout}>
+              <DropdownMenuItem onClick={handleLogout}>
                 Log out
               </DropdownMenuItem>
             </DropdownMenuContent>

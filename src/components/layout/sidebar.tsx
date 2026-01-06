@@ -23,7 +23,7 @@ import {
 import { cn } from '@/lib/utils';
 import Mascot from '@/components/mascot';
 import { Button } from '../ui/button';
-import { useUserSession } from '@/context/UserSessionContext';
+import { useFirebase } from '@/firebase';
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: Home },
@@ -47,7 +47,11 @@ const toolsItems = [
 
 export function Sidebar() {
   const pathname = usePathname();
-  const { logout } = useUserSession();
+  const { auth } = useFirebase();
+
+  const handleLogout = () => {
+    auth.signOut();
+  }
 
   const NavLink = ({ href, label, icon: Icon }: { href: string; label: string; icon: React.ElementType }) => (
     <li>
@@ -85,7 +89,7 @@ export function Sidebar() {
           </nav>
         </div>
         <div className="mt-auto p-4 border-t">
-            <Button variant="ghost" className="w-full justify-start" onClick={logout}>
+            <Button variant="ghost" className="w-full justify-start" onClick={handleLogout}>
                 <LogOut className="mr-2 h-4 w-4" />
                 Sign Out
             </Button>

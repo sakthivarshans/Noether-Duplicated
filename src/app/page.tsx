@@ -1,9 +1,8 @@
-
 'use client';
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useUserSession } from '@/context/UserSessionContext';
+import { useUser } from '@/firebase';
 import Mascot from '@/components/mascot';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -11,15 +10,15 @@ import { Loader2 } from 'lucide-react';
 
 export default function LandingPage() {
   const router = useRouter();
-  const { user, isLoading } = useUserSession();
+  const { user, isUserLoading } = useUser();
 
   useEffect(() => {
-    if (!isLoading && user) {
+    if (!isUserLoading && user) {
       router.replace('/dashboard');
     }
-  }, [user, isLoading, router]);
+  }, [user, isUserLoading, router]);
 
-  if (isLoading || user) {
+  if (isUserLoading || user) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <Loader2 className="h-16 w-16 animate-spin text-primary" />

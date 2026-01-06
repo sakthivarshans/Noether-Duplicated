@@ -1,44 +1,65 @@
 'use client';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useUserSession } from '@/context/UserSessionContext';
 import Link from 'next/link';
 import { Loader2 } from 'lucide-react';
 import Mascot from '@/components/mascot';
+import { useFirebase } from '@/firebase';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { useRouter } from 'next/navigation';
+import { useToast } from '@/hooks/use-toast';
 
 export default function LoginPage() {
-  const { login } = useUserSession();
+  const { auth } = useFirebase();
+  const router = useRouter();
+  const { toast } = useToast();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    // In a real app, you'd fetch the user's name from your DB based on email
-    // For this fake login, we'll derive a name from the email.
-    const name = email.split('@')[0].replace(/[^a-zA-Z]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-    
-    // Simulate network delay
-    setTimeout(() => {
-        login({ name, email });
-    }, 500);
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      toast({
+        title: 'Signed In!',
+        description: "Welcome back! Let's get learning.",
+      });
+      router.push('/dashboard');
+    } catch (error: any) {
+      console.error(error);
+      toast({
+        variant: 'destructive',
+        title: 'Login Failed',
+        description: 'Invalid email or password. Please try again.',
+      });
+      setIsLoading(false);
+    }
   };
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="w-full max-w-md">
-        <div className="flex justify-center mb-6">
-            <div className="w-24 h-24">
-                <Mascot />
-            </div>
+        <div className="mb-6 flex justify-center">
+          <div className="h-24 w-24">
+            <Mascot />
+          </div>
         </div>
         <Card>
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-headline">Welcome Back!</CardTitle>
+            <CardTitle className="font-headline text-2xl">
+              Welcome Back!
+            </CardTitle>
             <CardDescription>Sign in to continue to Noether.</CardDescription>
           </CardHeader>
           <CardContent>
@@ -56,12 +77,12 @@ export default function LoginPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
-                <Input 
-                    id="password" 
-                    type="password" 
-                    required 
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                <Input
+                  id="password"
+                  type="password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                 />
               </div>
               <Button type="submit" className="w-full" disabled={isLoading}>
@@ -71,7 +92,7 @@ export default function LoginPage() {
             </form>
             <div className="mt-4 text-center text-sm">
               Don&apos;t have an account?{' '}
-              <Link href="/signup" className="underline text-primary">
+              <Link href="/signup" className="text-primary underline">
                 Sign up
               </Link>
             </div>

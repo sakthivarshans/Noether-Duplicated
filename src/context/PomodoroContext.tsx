@@ -22,17 +22,16 @@ export const PomodoroProvider = ({ children }: { children: ReactNode }) => {
   const [isActive, setIsActive] = useState(false);
   const [isBreak, setIsBreak] = useState(false);
   const [sessionStartTime, setSessionStartTime] = useState<Date | null>(null);
-  const { addStudySession } = useUserSession();
+  const userSession = useUserSession();
 
   const logStudySession = useCallback(() => {
-    if (!sessionStartTime) return;
-    addStudySession({
-      id: sessionStartTime.toISOString(),
+    if (!sessionStartTime || !userSession) return;
+    userSession.addStudySession({
       startTime: sessionStartTime.toISOString(),
       endTime: new Date().toISOString(),
       duration: WORK_MINUTES,
     });
-  }, [sessionStartTime, addStudySession]);
+  }, [sessionStartTime, userSession]);
 
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;

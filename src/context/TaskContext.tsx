@@ -8,6 +8,7 @@ import { useUserSession } from './UserSessionContext';
 
 export interface Task {
   id: string;
+  userId: string;
   title: string;
   deadline: string;
   completed: boolean;
@@ -29,6 +30,7 @@ export const TaskProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const checkDeadlines = () => {
+      if (!tasks) return;
       tasks.forEach(task => {
         if (!task.completed && !notifiedTasks.includes(task.id)) {
           const now = new Date();
@@ -53,13 +55,10 @@ export const TaskProvider = ({ children }: { children: ReactNode }) => {
 
   const addTask = (title: string, deadline: string) => {
     if (!title || !deadline) return;
-    const newTask = {
-      id: new Date().toISOString(),
+    addUserSessionTask({
       title,
       deadline,
-      completed: false,
-    };
-    addUserSessionTask(newTask);
+    });
   };
 
   const toggleTaskCompletion = (id: string) => {

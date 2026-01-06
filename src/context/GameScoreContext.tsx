@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useState, useContext, ReactNode, useMemo } from 'react';
+import React, { createContext, useContext, ReactNode, useMemo } from 'react';
 import { isThisWeek } from 'date-fns';
 import { useUserSession } from './UserSessionContext';
 
@@ -39,8 +39,7 @@ export const GameScoreProvider = ({ children }: { children: ReactNode }) => {
   };
   
   const addScore = (gameName: string, score: number) => {
-    const newScore: GameScore = {
-      id: new Date().toISOString(), // Simple unique ID
+    const newScore = {
       gameName,
       score,
       playedDate: new Date().toISOString(),

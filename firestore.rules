@@ -139,101 +139,42 @@ service cloud.firestore {
        * @principle Enforces document ownership and validates relational integrity.
        */
       match /documents/{documentId} {
-        allow get: if isOwner(userId);
-        allow list: if isOwner(userId);
-        allow create: if isOwner(userId) && hasCorrectOwnerOnCreate(userId);
-        allow update: if isExistingOwner(userId) && isOwnerImmutable();
-        allow delete: if isExistingOwner(userId);
-
-        /**
-         * @description Controls access to flashcards within a user's document.
-         * @path /users/{userId}/documents/{documentId}/flashcards/{flashcardId}
-         * @allow (create) User 'abc' can create a flashcard at /users/abc/documents/doc1/flashcards/card1.
-         * @deny (delete) User 'xyz' cannot delete a flashcard at /users/abc/documents/doc1/flashcards/card1.
-         * @principle Enforces inherited ownership from the path and validates relational integrity.
-         */
-        match /flashcards/{flashcardId} {
-          allow get: if isOwner(userId);
-          allow list: if isOwner(userId);
-          allow create: if isOwner(userId) && hasCorrectFlashcardParentOnCreate(documentId);
-          allow update: if isExistingOwner(userId) && isFlashcardParentImmutable();
-          allow delete: if isExistingOwner(userId);
-        }
+        allow read, write: if isOwner(userId);
       }
 
       /**
-       * @description Controls access to a user's generated PYQ answers.
-       * @path /users/{userId}/pyqAnswers/{pyqAnswerId}
-       * @allow (list) User 'abc' can list all their PYQ answers under /users/abc/pyqAnswers.
-       * @deny (update) User 'xyz' cannot update a PYQ answer at /users/abc/pyqAnswers/ans1.
-       * @principle Enforces document ownership and validates relational integrity.
+       * @description Controls access to flashcards within a user's document.
+       * @path /users/{userId}/documents/{documentId}/flashcards/{flashcardId}
+       * @allow (create) User 'abc' can create a flashcard at /users/abc/documents/doc1/flashcards/card1.
+       * @deny (delete) User 'xyz' cannot delete a flashcard at /users/abc/documents/doc1/flashcards/card1.
+       * @principle Enforces inherited ownership from the path and validates relational integrity.
        */
+      match /flashcards/{flashcardId} {
+        allow read, write: if isOwner(userId);
+      }
+      
       match /pyqAnswers/{pyqAnswerId} {
-        allow get: if isOwner(userId);
-        allow list: if isOwner(userId);
-        allow create: if isOwner(userId) && hasCorrectOwnerOnCreate(userId);
-        allow update: if isExistingOwner(userId) && isOwnerImmutable();
-        allow delete: if isExistingOwner(userId);
+        allow read, write: if isOwner(userId);
       }
 
-      /**
-       * @description Controls access to a user's generated timetables.
-       * @path /users/{userId}/timetables/{timetableId}
-       * @allow (get) User 'abc' can get their timetable at /users/abc/timetables/tt1.
-       * @deny (create) User 'xyz' cannot create a timetable at /users/abc/timetables/tt2.
-       * @principle Enforces document ownership and validates relational integrity.
-       */
       match /timetables/{timetableId} {
-        allow get: if isOwner(userId);
-        allow list: if isOwner(userId);
-        allow create: if isOwner(userId) && hasCorrectOwnerOnCreate(userId);
-        allow update: if isExistingOwner(userId) && isOwnerImmutable();
-        allow delete: if isExistingOwner(userId);
+        allow read, write: if isOwner(userId);
       }
 
-      /**
-       * @description Controls access to a user's to-do tasks.
-       * @path /users/{userId}/todoTasks/{todoTaskId}
-       * @allow (create) User 'abc' can create a task at /users/abc/todoTasks/task1.
-       * @deny (get) User 'xyz' cannot read task data from /users/abc/todoTasks/task1.
-       * @principle Enforces document ownership and validates relational integrity.
-       */
       match /todoTasks/{todoTaskId} {
-        allow get: if isOwner(userId);
-        allow list: if isOwner(userId);
-        allow create: if isOwner(userId) && hasCorrectOwnerOnCreate(userId);
-        allow update: if isExistingOwner(userId) && isOwnerImmutable();
-        allow delete: if isExistingOwner(userId);
+        allow read, write: if isOwner(userId);
       }
 
-      /**
-       * @description Controls access to a user's voice notes.
-       * @path /users/{userId}/voiceNotes/{voiceNoteId}
-       * @allow (delete) User 'abc' can delete their voice note at /users/abc/voiceNotes/note1.
-       * @deny (list) User 'xyz' cannot list voice notes from /users/abc/voiceNotes.
-       * @principle Enforces document ownership and validates relational integrity.
-       */
       match /voiceNotes/{voiceNoteId} {
-        allow get: if isOwner(userId);
-        allow list: if isOwner(userId);
-        allow create: if isOwner(userId) && hasCorrectOwnerOnCreate(userId);
-        allow update: if isExistingOwner(userId) && isOwnerImmutable();
-        allow delete: if isExistingOwner(userId);
+        allow read, write: if isOwner(userId);
       }
-
-      /**
-       * @description Controls access to a user's game scores.
-       * @path /users/{userId}/gameScores/{gameScoreId}
-       * @allow (create) User 'abc' can create a new game score at /users/abc/gameScores/score1.
-       * @deny (update) An unauthenticated user cannot update a score at /users/abc/gameScores/score1.
-       * @principle Enforces document ownership and validates relational integrity.
-       */
+      
+      match /studySessions/{studySessionId} {
+        allow read, write: if isOwner(userId);
+      }
+      
       match /gameScores/{gameScoreId} {
-        allow get: if isOwner(userId);
-        allow list: if isOwner(userId);
-        allow create: if isOwner(userId) && hasCorrectOwnerOnCreate(userId);
-        allow update: if isExistingOwner(userId) && isOwnerImmutable();
-        allow delete: if isExistingOwner(userId);
+        allow read, write: if isOwner(userId);
       }
     }
   }

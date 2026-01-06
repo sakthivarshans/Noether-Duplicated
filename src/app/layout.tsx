@@ -11,6 +11,7 @@ import { PomodoroProvider } from '@/context/PomodoroContext';
 import FloatingPomodoroTimer from '@/components/dashboard/FloatingPomodoroTimer';
 import { MusicProvider } from '@/context/MusicContext';
 import FloatingMusicPlayer from '@/components/dashboard/FloatingMusicPlayer';
+import { FirebaseClientProvider } from '@/firebase';
 
 const fontBody = Lexend({
   subsets: ['latin'],
@@ -45,7 +46,7 @@ export const metadata: Metadata = {
   description: 'Your personal AI study assistant to master any subject.',
   icons: {
     icon: faviconDataUri,
-  }
+  },
 };
 
 export default function RootLayout({
@@ -69,19 +70,21 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <UserSessionProvider>
-            <GameScoreProvider>
-              <TaskProvider>
-                <PomodoroProvider>
-                  <MusicProvider>
-                    {children}
-                    <FloatingPomodoroTimer />
-                    <FloatingMusicPlayer />
-                  </MusicProvider>
-                </PomodoroProvider>
-              </TaskProvider>
-            </GameScoreProvider>
-          </UserSessionProvider>
+          <FirebaseClientProvider>
+            <UserSessionProvider>
+              <GameScoreProvider>
+                <TaskProvider>
+                  <PomodoroProvider>
+                    <MusicProvider>
+                      {children}
+                      <FloatingPomodoroTimer />
+                      <FloatingMusicPlayer />
+                    </MusicProvider>
+                  </PomodoroProvider>
+                </TaskProvider>
+              </GameScoreProvider>
+            </UserSessionProvider>
+          </FirebaseClientProvider>
           <Toaster />
         </ThemeProvider>
       </body>

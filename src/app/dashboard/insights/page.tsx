@@ -10,12 +10,6 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useUserSession } from '@/context/UserSessionContext';
 
-interface StudySession {
-  id: string;
-  duration: number;
-  endTime: string;
-}
-
 type TimeRange = 'today' | 'this_week' | 'last_15_days';
 
 const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -82,10 +76,6 @@ export default function InsightsPage() {
   const { tasks } = useTasks();
   const completedTasks = tasks.filter(t => t.completed).length;
   const pendingTasks = tasks.length - completedTasks;
-  const taskData = [
-    { name: 'Completed', value: completedTasks, fill: 'hsl(var(--primary))' },
-    { name: 'Pending', value: pendingTasks, fill: 'hsl(var(--muted))' },
-  ];
 
   const { totalScore } = useGameScores();
 
